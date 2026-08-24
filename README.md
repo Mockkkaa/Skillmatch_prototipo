@@ -1,6 +1,6 @@
 # Skillmatch_prototipo
 
-````markdown
+
 # SkillMatch 🚀
 
 ### Plataforma de gestión de empleo para aprendices del SENA
