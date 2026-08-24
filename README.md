@@ -1,5 +1,4 @@
 # Skillmatch_prototipo
-Claro bro. Te lo dejo **TODO en un solo bloque**, listo para copiar y pegar directamente en el `README.md` de GitHub:
 
 ````markdown
 # SkillMatch 🚀
