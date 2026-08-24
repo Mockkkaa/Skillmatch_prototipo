@@ -1,0 +1,123 @@
+/* ============================================================
+   SKILLMATCH - Responsive CSS
+   ============================================================ */
+
+/* Tablet landscape */
+@media (max-width: 1024px) {
+  :root {
+    --content-padding: var(--space-6);
+  }
+
+  .grid-4 { grid-template-columns: repeat(2, 1fr); }
+  .grid-3 { grid-template-columns: repeat(2, 1fr); }
+
+  .dashboard-layout .sidebar {
+    width: var(--sidebar-collapsed);
+  }
+
+  .sidebar .nav-label,
+  .sidebar .sidebar-brand-text {
+    display: none;
+  }
+}
+
+/* Tablet portrait */
+@media (max-width: 768px) {
+  :root {
+    --content-padding: var(--space-4);
+  }
+
+  h1 { font-size: var(--font-size-2xl); }
+  h2 { font-size: var(--font-size-xl); }
+
+  .grid-4 { grid-template-columns: 1fr 1fr; }
+  .grid-3 { grid-template-columns: 1fr 1fr; }
+  .grid-2 { grid-template-columns: 1fr; }
+
+  .form-row { grid-template-columns: 1fr; }
+
+  .modal {
+    max-width: 100%;
+    margin: 0;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    max-height: 90vh;
+  }
+
+  .modal-backdrop { align-items: flex-end; padding: 0; }
+
+  .dashboard-layout .sidebar {
+    position: fixed;
+    left: -100%;
+    top: 0;
+    bottom: 0;
+    width: var(--sidebar-width);
+    z-index: var(--z-sticky);
+    transition: left var(--transition-normal);
+  }
+
+  .dashboard-layout .sidebar.open {
+    left: 0;
+  }
+
+  .dashboard-layout .main-content {
+    margin-left: 0 !important;
+  }
+
+  .dashboard-layout .header {
+    left: 0 !important;
+  }
+
+  .table-container {
+    border-radius: var(--radius-md);
+  }
+
+  .table th:nth-child(n+4),
+  .table td:nth-child(n+4) {
+    display: none;
+  }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  :root {
+    --content-padding: var(--space-4);
+  }
+
+  h1 { font-size: var(--font-size-xl); }
+  h2 { font-size: var(--font-size-lg); }
+
+  .grid-4,
+  .grid-3,
+  .grid-2 { grid-template-columns: 1fr; }
+
+  .btn-xl { padding: 14px 24px; }
+
+  .container { padding: 0 var(--space-4); }
+
+  .card-header, .card-body { padding: var(--space-4); }
+
+  .page-header { margin-bottom: var(--space-6); }
+
+  .stat-card { padding: var(--space-4); }
+
+  .table th:nth-child(n+3),
+  .table td:nth-child(n+3) {
+    display: none;
+  }
+
+  .hero-buttons {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .hero-buttons .btn { width: 100%; justify-content: center; }
+}
+
+/* Large screens */
+@media (min-width: 1280px) {
+  .grid-4 { grid-template-columns: repeat(4, 1fr); }
+}

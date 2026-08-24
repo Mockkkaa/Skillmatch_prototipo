@@ -1,0 +1,122 @@
+/* ============================================================
+   SKILLMATCH - Variables CSS
+   Sistema de diseño centralizado
+   ============================================================ */
+
+:root {
+  /* === COLORS === */
+  --color-primary: #39A845;
+  --color-primary-dark: #2d8a37;
+  --color-primary-light: #e8f7ea;
+  --color-secondary: #00A86B;
+  --color-secondary-light: #e0f5ec;
+  --color-blue: #1F4E79;
+  --color-blue-light: #e8f0f8;
+  --color-blue-mid: #2d6da3;
+
+  /* Backgrounds */
+  --color-background: #F8FAFC;
+  --color-white: #FFFFFF;
+  --color-surface: #FFFFFF;
+  --color-surface-2: #F1F5F9;
+
+  /* Text */
+  --color-text: #2D3748;
+  --color-text-secondary: #6B7280;
+  --color-text-muted: #9CA3AF;
+  --color-text-light: #FFFFFF;
+
+  /* Borders */
+  --color-border: #E5E7EB;
+  --color-border-light: #F3F4F6;
+  --color-border-focus: #39A845;
+
+  /* States */
+  --color-success: #39A845;
+  --color-success-light: #e8f7ea;
+  --color-warning: #F59E0B;
+  --color-warning-light: #FEF3C7;
+  --color-error: #EF4444;
+  --color-error-light: #FEE2E2;
+  --color-info: #3B82F6;
+  --color-info-light: #EFF6FF;
+
+  /* Badge colors */
+  --badge-enviada: #3B82F6;
+  --badge-revision: #F59E0B;
+  --badge-preseleccionado: #8B5CF6;
+  --badge-rechazado: #EF4444;
+  --badge-finalizado: #39A845;
+
+  /* === TYPOGRAPHY === */
+  --font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-size-xs: 0.75rem;    /* 12px */
+  --font-size-sm: 0.875rem;   /* 14px */
+  --font-size-base: 1rem;     /* 16px */
+  --font-size-md: 1.125rem;   /* 18px */
+  --font-size-lg: 1.25rem;    /* 20px */
+  --font-size-xl: 1.5rem;     /* 24px */
+  --font-size-2xl: 1.875rem;  /* 30px */
+  --font-size-3xl: 2.25rem;   /* 36px */
+  --font-size-4xl: 3rem;      /* 48px */
+
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+
+  /* === SPACING === */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
+  --space-24: 6rem;
+
+  /* === BORDER RADIUS === */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-2xl: 28px;
+  --radius-full: 9999px;
+
+  /* === SHADOWS === */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.10);
+  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.12);
+  --shadow-primary: 0 4px 16px rgba(57, 168, 69, 0.25);
+  --shadow-blue: 0 4px 16px rgba(31, 78, 121, 0.18);
+
+  /* === LAYOUT === */
+  --sidebar-width: 260px;
+  --sidebar-collapsed: 72px;
+  --header-height: 64px;
+  --container-max: 1280px;
+  --content-padding: var(--space-8);
+
+  /* === TRANSITIONS === */
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+  --transition-slow: 400ms ease;
+
+  /* === Z-INDEX === */
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-modal-backdrop: 300;
+  --z-modal: 400;
+  --z-toast: 500;
+}
