@@ -3,7 +3,8 @@
 -- Plataforma de gestión de empleo para aprendices del SENA
 -- ============================================================
 
-CREATE DATABASE IF NOT EXISTS skillmatch CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+DROP DATABASE IF EXISTS skillmatch;
+CREATE DATABASE skillmatch CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE skillmatch;
 
 -- ============================================================
