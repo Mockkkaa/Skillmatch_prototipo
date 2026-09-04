@@ -31,27 +31,27 @@ INSERT INTO programas_formacion (nombre, area, nivel, duracion_meses) VALUES
 -- Hash bcrypt de "Admin2024!"
 -- ============================================================
 INSERT INTO usuarios (nombre, apellido, correo, contrasena, documento, telefono, ciudad, rol_id) VALUES
-('Carlos', 'Mendoza', 'admin@skillmatch.co', '$2b$10$rQnv5V3Z1K9P2M8X4Y7W0u5vJ3L6O9R2T8U1Q4S7N0M3K6I9F2E5B', '1000111001', '3001234567', 'Bogotá', 1),
-('María', 'Gómez', 'maria.admin@skillmatch.co', '$2b$10$rQnv5V3Z1K9P2M8X4Y7W0u5vJ3L6O9R2T8U1Q4S7N0M3K6I9F2E5B', '1000111002', '3007654321', 'Medellín', 1);
+('Carlos', 'Mendoza', 'admin@skillmatch.co', '$2b$10$mPeZDjaAoj0Mf1VGGDmFROlnGg4f8jL.w2t1.pxC.wS8le7bd/Csi', '1000111001', '3001234567', 'Bogotá', 1),
+('María', 'Gómez', 'maria.admin@skillmatch.co', '$2b$10$mPeZDjaAoj0Mf1VGGDmFROlnGg4f8jL.w2t1.pxC.wS8le7bd/Csi', '1000111002', '3007654321', 'Medellín', 1);
 
 -- FUNCIONARIOS (contraseña: Func2024!)
 INSERT INTO usuarios (nombre, apellido, correo, contrasena, documento, telefono, ciudad, rol_id) VALUES
-('Juan', 'Pérez', 'juan.funcionario@sena.edu.co', '$2b$10$rQnv5V3Z1K9P2M8X4Y7W0u5vJ3L6O9R2T8U1Q4S7N0M3K6I9F2E5B', '1000222001', '3101112233', 'Bogotá', 2),
-('Ana', 'Torres', 'ana.funcionario@sena.edu.co', '$2b$10$rQnv5V3Z1K9P2M8X4Y7W0u5vJ3L6O9R2T8U1Q4S7N0M3K6I9F2E5B', '1000222002', '3104445566', 'Cali', 2);
+('Juan', 'Pérez', 'juan.funcionario@sena.edu.co', '$2b$10$tZKopOo5lYFydLe6mA3/8uLcMEuIoipQkXfDFpQ.pYKzK8IeMqh/S', '1000222001', '3101112233', 'Bogotá', 2),
+('Ana', 'Torres', 'ana.funcionario@sena.edu.co', '$2b$10$tZKopOo5lYFydLe6mA3/8uLcMEuIoipQkXfDFpQ.pYKzK8IeMqh/S', '1000222002', '3104445566', 'Cali', 2);
 
 -- APRENDICES (contraseña: Aprendiz2024!)
 INSERT INTO usuarios (nombre, apellido, correo, contrasena, documento, telefono, ciudad, rol_id) VALUES
-('Santiago', 'Ramírez', 'santiago.r@misena.edu.co', '$2b$10$rQnv5V3Z1K9P2M8X4Y7W0u5vJ3L6O9R2T8U1Q4S7N0M3K6I9F2E5B', '1002333001', '3201112233', 'Bogotá', 3),
-('Laura', 'Martínez', 'laura.m@misena.edu.co', '$2b$10$rQnv5V3Z1K9P2M8X4Y7W0u5vJ3L6O9R2T8U1Q4S7N0M3K6I9F2E5B', '1002333002', '3204445566', 'Medellín', 3),
-('Andrés', 'López', 'andres.l@misena.edu.co', '$2b$10$rQnv5V3Z1K9P2M8X4Y7W0u5vJ3L6O9R2T8U1Q4S7N0M3K6I9F2E5B', '1002333003', '3207778899', 'Cali', 3),
-('Valentina', 'Cruz', 'valentina.c@misena.edu.co', '$2b$10$rQnv5V3Z1K9P2M8X4Y7W0u5vJ3L6O9R2T8U1Q4S7N0M3K6I9F2E5B', '1002333004', '3150001234', 'Barranquilla', 3),
-('Miguel', 'Herrera', 'miguel.h@misena.edu.co', '$2b$10$rQnv5V3Z1K9P2M8X4Y7W0u5vJ3L6O9R2T8U1Q4S7N0M3K6I9F2E5B', '1002333005', '3156669999', 'Bucaramanga', 3);
+('Santiago', 'Ramírez', 'santiago.r@misena.edu.co', '$2b$10$Oz2Iv90SGjiDHcJKLlGmbOyz.xFy6Wf/xttTZX3B41ku84X4mfPmq', '1002333001', '3201112233', 'Bogotá', 3),
+('Laura', 'Martínez', 'laura.m@misena.edu.co', '$2b$10$Oz2Iv90SGjiDHcJKLlGmbOyz.xFy6Wf/xttTZX3B41ku84X4mfPmq', '1002333002', '3204445566', 'Medellín', 3),
+('Andrés', 'López', 'andres.l@misena.edu.co', '$2b$10$Oz2Iv90SGjiDHcJKLlGmbOyz.xFy6Wf/xttTZX3B41ku84X4mfPmq', '1002333003', '3207778899', 'Cali', 3),
+('Valentina', 'Cruz', 'valentina.c@misena.edu.co', '$2b$10$Oz2Iv90SGjiDHcJKLlGmbOyz.xFy6Wf/xttTZX3B41ku84X4mfPmq', '1002333004', '3150001234', 'Barranquilla', 3),
+('Miguel', 'Herrera', 'miguel.h@misena.edu.co', '$2b$10$Oz2Iv90SGjiDHcJKLlGmbOyz.xFy6Wf/xttTZX3B41ku84X4mfPmq', '1002333005', '3156669999', 'Bucaramanga', 3);
 
 -- EMPRESAS (contraseña: Empresa2024!)
 INSERT INTO usuarios (nombre, apellido, correo, contrasena, documento, telefono, ciudad, rol_id) VALUES
-('TechCorp', 'Colombia', 'contacto@techcorp.co', '$2b$10$rQnv5V3Z1K9P2M8X4Y7W0u5vJ3L6O9R2T8U1Q4S7N0M3K6I9F2E5B', '9001001001', '6011234567', 'Bogotá', 4),
-('Innovasoft', 'SAS', 'rrhh@innovasoft.co', '$2b$10$rQnv5V3Z1K9P2M8X4Y7W0u5vJ3L6O9R2T8U1Q4S7N0M3K6I9F2E5B', '9001002002', '6044567890', 'Medellín', 4),
-('DigitalMind', 'Ltda', 'talentos@digitalmind.co', '$2b$10$rQnv5V3Z1K9P2M8X4Y7W0u5vJ3L6O9R2T8U1Q4S7N0M3K6I9F2E5B', '9001003003', '6022345678', 'Cali', 4);
+('TechCorp', 'Colombia', 'contacto@techcorp.co', '$2b$10$Bzi.GXLMYWRplzdHzZ1J1OCCR9V5lDBAyKR1bJEp6nrqcGmNPyDSi', '9001001001', '6011234567', 'Bogotá', 4),
+('Innovasoft', 'SAS', 'rrhh@innovasoft.co', '$2b$10$Bzi.GXLMYWRplzdHzZ1J1OCCR9V5lDBAyKR1bJEp6nrqcGmNPyDSi', '9001002002', '6044567890', 'Medellín', 4),
+('DigitalMind', 'Ltda', 'talentos@digitalmind.co', '$2b$10$Bzi.GXLMYWRplzdHzZ1J1OCCR9V5lDBAyKR1bJEp6nrqcGmNPyDSi', '9001003003', '6022345678', 'Cali', 4);
 
 -- ============================================================
 -- APRENDICES (perfil extendido)

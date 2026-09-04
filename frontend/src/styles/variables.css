@@ -1,27 +1,38 @@
 /* ============================================================
    SKILLMATCH - Variables CSS
-   Sistema de diseño centralizado
+   Sistema de diseño centralizado — Identidad SKILLMATCH
    ============================================================ */
 
 :root {
-  /* === COLORS === */
-  --color-primary: #39A845;
-  --color-primary-dark: #2d8a37;
-  --color-primary-light: #e8f7ea;
-  --color-secondary: #00A86B;
-  --color-secondary-light: #e0f5ec;
-  --color-blue: #1F4E79;
-  --color-blue-light: #e8f0f8;
-  --color-blue-mid: #2d6da3;
+  /* === BRAND COLORS === */
+  --color-navy: #0B132B;
+  --color-navy-light: #1C2541;
+  --color-navy-mid: #162040;
+
+  /* Primary — Verde empleabilidad */
+  --color-primary: #2E8B57;
+  --color-primary-dark: #236B43;
+  --color-primary-light: #E8F5EE;
+  --color-primary-hover: #267A4D;
+
+  /* Secondary — Verde claro */
+  --color-secondary: #3BA66B;
+  --color-secondary-light: #E0F5EC;
+
+  /* Blue — Para elementos secundarios */
+  --color-blue: #0B132B;
+  --color-blue-light: #E8F1F8;
+  --color-blue-mid: #1C2541;
+  --color-blue-accent: #3B82F6;
 
   /* Backgrounds */
-  --color-background: #F8FAFC;
+  --color-background: #F7F9FB;
   --color-white: #FFFFFF;
   --color-surface: #FFFFFF;
   --color-surface-2: #F1F5F9;
 
   /* Text */
-  --color-text: #2D3748;
+  --color-text: #1F2937;
   --color-text-secondary: #6B7280;
   --color-text-muted: #9CA3AF;
   --color-text-light: #FFFFFF;
@@ -29,11 +40,11 @@
   /* Borders */
   --color-border: #E5E7EB;
   --color-border-light: #F3F4F6;
-  --color-border-focus: #39A845;
+  --color-border-focus: #2E8B57;
 
   /* States */
-  --color-success: #39A845;
-  --color-success-light: #e8f7ea;
+  --color-success: #2E8B57;
+  --color-success-light: #E8F5EE;
   --color-warning: #F59E0B;
   --color-warning-light: #FEF3C7;
   --color-error: #EF4444;
@@ -46,10 +57,10 @@
   --badge-revision: #F59E0B;
   --badge-preseleccionado: #8B5CF6;
   --badge-rechazado: #EF4444;
-  --badge-finalizado: #39A845;
+  --badge-finalizado: #2E8B57;
 
   /* === TYPOGRAPHY === */
-  --font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-size-xs: 0.75rem;    /* 12px */
   --font-size-sm: 0.875rem;   /* 14px */
   --font-size-base: 1rem;     /* 16px */
@@ -98,8 +109,8 @@
   --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
   --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.10);
   --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.12);
-  --shadow-primary: 0 4px 16px rgba(57, 168, 69, 0.25);
-  --shadow-blue: 0 4px 16px rgba(31, 78, 121, 0.18);
+  --shadow-primary: 0 4px 16px rgba(46, 139, 87, 0.25);
+  --shadow-navy: 0 4px 16px rgba(11, 19, 43, 0.18);
 
   /* === LAYOUT === */
   --sidebar-width: 260px;

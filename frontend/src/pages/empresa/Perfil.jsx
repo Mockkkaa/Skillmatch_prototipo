@@ -4,24 +4,31 @@ import { empresaService } from '../../services';
 import Card from '../../components/common/Card';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
-import Alert from '../../components/common/Alert';
 import Badge from '../../components/common/Badge';
 import Loading from '../../components/common/Loading';
+import Toast from '../../components/common/Toast';
+import FormSection from '../../components/common/FormSection';
+import Select from '../../components/common/Select';
+import { mockEmpresas } from '../../data/mockData';
 
-export default function Perfil() {
+export default function PerfilEmpresa() {
   const { user, updateUser } = useAuth();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState(null);
+  const [toast, setToast] = useState(null);
 
   useEffect(() => {
     async function loadData() {
       try {
         const res = await empresaService.miEmpresa();
-        setData(res.data.data);
+        if (res.data?.success && res.data.data) {
+          setData(res.data.data);
+        } else {
+          setData(mockEmpresas[0]);
+        }
       } catch (error) {
-        console.error("Error loading profile", error);
+        setData(mockEmpresas[0]);
       } finally {
         setLoading(false);
       }
@@ -32,98 +39,234 @@ export default function Perfil() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
-    setMessage(null);
-    
     const formData = new FormData(e.target);
     const updateData = Object.fromEntries(formData);
-    
+
     try {
-      await empresaService.update(data.id, updateData);
-      setMessage({ type: 'success', text: 'Perfil empresarial actualizado correctamente.' });
-      
-      if (updateData.razon_social !== user.nombre) {
+      if (data?.id) {
+        await empresaService.update(data.id, updateData);
+      }
+      setData((prev) => ({ ...prev, ...updateData }));
+      setToast('Perfil empresarial actualizado correctamente.');
+      if (updateData.razon_social) {
         updateUser({ nombre: updateData.razon_social });
       }
     } catch (error) {
-      setMessage({ type: 'error', text: error.response?.data?.message || 'Error al actualizar perfil.' });
+      setData((prev) => ({ ...prev, ...updateData }));
+      setToast('Perfil empresarial actualizado (Modo Prototipo).');
+      if (updateData.razon_social) {
+        updateUser({ nombre: updateData.razon_social });
+      }
     } finally {
       setSaving(false);
     }
   };
 
-  if (loading) return <Loading />;
-  if (!data) return <Alert variant="error">Error al cargar datos del perfil empresarial.</Alert>;
+  if (loading) return <Loading fullPage={false} />;
+  const emp = data || mockEmpresas[0];
 
   return (
-    <div>
-      <div className="page-header">
-        <h1>Perfil Empresarial</h1>
-        <p>Administra la información pública de tu empresa</p>
-      </div>
-
-      {message && (
-        <Alert variant={message.type} className="mb-6">
-          {message.text}
-        </Alert>
+    <div className="animate-fade">
+      {toast && (
+        <div className="toast-container">
+          <Toast message={toast} type="success" onClose={() => setToast(null)} />
+        </div>
       )}
 
-      <div className="grid grid-3 gap-8">
-        <div className="col-span-1">
-          <Card>
-            <Card.Body className="flex flex-col items-center text-center">
-              <div className="avatar avatar-xl mb-4 bg-primary-light text-primary">
-                🏢
+      <div className="page-header mb-6">
+        <h1 style={{ fontSize: '1.875rem', fontWeight: 800, color: 'var(--color-navy)' }}>
+          Perfil de la Organización
+        </h1>
+        <p style={{ color: 'var(--color-text-secondary)', marginTop: '4px' }}>
+          Configura los datos corporativos, canales de contacto y descripción de la empresa.
+        </p>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '24px' }}>
+        <div style={{ gridColumn: 'span 4' }} className="empresa-profile-side">
+          <Card style={{ position: 'sticky', top: '90px' }}>
+            <div className="card-body flex flex-col items-center text-center p-6">
+              <div
+                style={{
+                  width: '80px',
+                  height: '80px',
+                  borderRadius: '20px',
+                  background: 'var(--color-navy)',
+                  color: '#FFFFFF',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: 800,
+                  fontSize: '1.75rem',
+                  marginBottom: '16px'
+                }}
+              >
+                {emp.razon_social ? emp.razon_social.charAt(0) : 'E'}
               </div>
-              <h3 className="font-bold">{data.razon_social}</h3>
-              <p className="text-sm text-secondary">NIT: {data.nit}</p>
-              
-              <div className="mt-4 w-full">
-                <div className="text-sm text-secondary text-left mb-1">Estado en SkillMatch</div>
-                <Badge variant={data.estado === 'APROBADA' ? 'success' : data.estado === 'PENDIENTE' ? 'warning' : 'error'} className="w-full justify-center py-2 text-sm">
-                  {data.estado}
+
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--color-navy)' }}>
+                {emp.razon_social}
+              </h3>
+              <p style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginTop: '2px' }}>
+                NIT: {emp.nit || '901.345.678-9'}
+              </p>
+
+              <div className="mt-4 w-full text-left">
+                <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', display: 'block', marginBottom: '4px' }}>
+                  Estado de Habilitación
+                </span>
+                <Badge
+                  variant={emp.estado === 'APROBADA' ? 'success' : emp.estado === 'PENDIENTE' ? 'warning' : 'error'}
+                  className="w-full justify-center py-2"
+                >
+                  {emp.estado || 'APROBADA'}
                 </Badge>
               </div>
-            </Card.Body>
+
+              <div className="divider w-full" style={{ margin: '20px 0' }}></div>
+
+              <div style={{ width: '100%', textAlign: 'left', fontSize: '0.85rem' }}>
+                <div style={{ marginBottom: '10px' }}>
+                  <span style={{ color: 'var(--color-text-muted)', display: 'block', fontSize: '0.75rem' }}>
+                    Sector Económico
+                  </span>
+                  <strong>{emp.sector_economico || emp.sector || 'Tecnología y Software'}</strong>
+                </div>
+                <div style={{ marginBottom: '10px' }}>
+                  <span style={{ color: 'var(--color-text-muted)', display: 'block', fontSize: '0.75rem' }}>
+                    Ciudad
+                  </span>
+                  <strong>{emp.ciudad || 'Bogotá D.C.'}</strong>
+                </div>
+                {emp.sitio_web && (
+                  <div>
+                    <span style={{ color: 'var(--color-text-muted)', display: 'block', fontSize: '0.75rem' }}>
+                      Página Web
+                    </span>
+                    <a
+                      href={emp.sitio_web}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ color: 'var(--color-primary)', wordBreak: 'break-all' }}
+                    >
+                      {emp.sitio_web}
+                    </a>
+                  </div>
+                )}
+              </div>
+            </div>
           </Card>
         </div>
 
-        <div className="col-span-2" style={{ gridColumn: 'span 2' }}>
+        <div style={{ gridColumn: 'span 8' }} className="empresa-profile-main">
           <Card>
-            <Card.Header>
-              <h3>Información de la Empresa</h3>
-            </Card.Header>
-            <Card.Body>
-              <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-                <div className="form-row">
-                  <Input label="Razón Social" name="razon_social" defaultValue={data.razon_social} required />
-                  <Input label="NIT" value={data.nit} disabled hint="Para cambiar el NIT contacta a soporte" />
-                </div>
-                
-                <div className="form-row">
-                  <Input label="Sector / Industria" name="sector" defaultValue={data.sector} />
-                  <Input label="Ciudad Principal" name="ciudad" defaultValue={data.ciudad} required />
-                </div>
+            <div className="card-body" style={{ padding: '32px' }}>
+              <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+                <FormSection
+                  title="Identificación Legal"
+                  description="Datos constitutivos y razón social de la entidad."
+                >
+                  <div className="form-row mb-4">
+                    <Input
+                      label="Razón Social"
+                      name="razon_social"
+                      defaultValue={emp.razon_social}
+                      required
+                    />
+                    <Input
+                      label="Número de Identificación Tributaria (NIT)"
+                      name="nit"
+                      value={emp.nit}
+                      disabled
+                      hint="Para modificar el NIT contacta con administración."
+                    />
+                  </div>
 
-                <div className="form-row">
-                  <Input label="Teléfono de Contacto" name="telefono" defaultValue={data.telefono} required />
-                  <Input label="Correo Corporativo" name="correo_empresa" type="email" defaultValue={data.correo_empresa} />
-                </div>
-                
-                <Input label="Sitio Web" name="sitio_web" type="url" defaultValue={data.sitio_web} placeholder="https://www.empresa.com" />
+                  <div className="form-row">
+                    <Input
+                      label="Sector o Actividad Económica"
+                      name="sector_economico"
+                      defaultValue={emp.sector_economico || emp.sector || 'Tecnología y Software'}
+                    />
+                    <Select
+                      label="Tamaño de la Organización"
+                      name="tamano_empresa"
+                      defaultValue={emp.tamano_empresa || 'Mediana (51-200 empleados)'}
+                      options={[
+                        'Microempresa (1-10 empleados)',
+                        'Pequeña (11-50 empleados)',
+                        'Mediana (51-200 empleados)',
+                        'Grande (más de 200 empleados)'
+                      ]}
+                    />
+                  </div>
+                </FormSection>
 
-                <Input 
-                  label="Descripción de la Empresa" 
-                  name="descripcion" 
-                  type="textarea" 
-                  defaultValue={data.descripcion} 
-                  hint="Describe a qué se dedica tu empresa, su cultura y por qué es un buen lugar para trabajar." 
-                />
+                <FormSection
+                  title="Contacto y Ubicación"
+                  description="Canales para comunicación directa con el área de talento humano."
+                >
+                  <div className="form-row mb-4">
+                    <Input
+                      label="Ciudad Principal"
+                      name="ciudad"
+                      defaultValue={emp.ciudad || 'Bogotá D.C.'}
+                      required
+                    />
+                    <Input
+                      label="Dirección de la Sede"
+                      name="direccion"
+                      defaultValue={emp.direccion || 'Cra 15 # 93-60 Of. 402'}
+                    />
+                  </div>
 
-                <div className="flex justify-end mt-4">
-                  <Button type="submit" isLoading={saving}>Guardar Cambios</Button>
+                  <div className="form-row mb-4">
+                    <Input
+                      label="Teléfono Corporativo"
+                      name="telefono_contacto"
+                      defaultValue={emp.telefono_contacto || emp.telefono || '6017894561'}
+                      required
+                    />
+                    <Input
+                      label="Correo de Contacto para Aprendices"
+                      name="email_contacto"
+                      type="email"
+                      defaultValue={emp.email_contacto || emp.correo_empresa || 'talento@empresa.com'}
+                    />
+                  </div>
+
+                  <Input
+                    label="Página Web Corporativa"
+                    name="sitio_web"
+                    type="url"
+                    defaultValue={emp.sitio_web || 'https://empresa.com'}
+                    placeholder="https://empresa.com"
+                  />
+                </FormSection>
+
+                <FormSection
+                  title="Presentación Institucional"
+                  description="Breve reseña sobre los proyectos, propósito y entorno de aprendizaje que ofrece la empresa."
+                >
+                  <Input
+                    label="Descripción de la Empresa"
+                    name="descripcion"
+                    type="textarea"
+                    rows={4}
+                    defaultValue={
+                      emp.descripcion ||
+                      'Empresa líder en desarrollo de soluciones digitales y consultoría tecnológica aliada con el SENA para impulsar el talento joven colombiano.'
+                    }
+                  />
+                </FormSection>
+
+                <div className="flex justify-end mt-2">
+                  <Button type="submit" variant="primary" size="lg" loading={saving}>
+                    Guardar datos de la empresa
+                  </Button>
                 </div>
               </form>
-            </Card.Body>
+            </div>
           </Card>
         </div>
       </div>

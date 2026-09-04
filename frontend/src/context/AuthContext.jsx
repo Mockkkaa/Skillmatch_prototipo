@@ -35,8 +35,8 @@ export function AuthProvider({ children }) {
   };
 
   const isAuthenticated = !!user;
-  const isRole = (role) => user?.rol === role;
-  const isAdmin = () => isRole('ADMINISTRADOR');
+  const isRole = (role) => user?.rol?.toUpperCase() === role?.toUpperCase();
+  const isAdmin = () => isRole('ADMINISTRADOR') || isRole('ADMIN');
   const isAprendiz = () => isRole('APRENDIZ');
   const isEmpresa = () => isRole('EMPRESA');
   const isFuncionario = () => isRole('FUNCIONARIO');

@@ -6,6 +6,10 @@ import Badge from '../../components/common/Badge';
 import Loading from '../../components/common/Loading';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
+import Toast from '../../components/common/Toast';
+import Avatar from '../../components/common/Avatar';
+import Select from '../../components/common/Select';
+import { mockAprendices, mockFormacion, mockExperiencia, mockHabilidades } from '../../data/mockData';
 
 export default function HojaVida() {
   const { user } = useAuth();
@@ -13,19 +17,41 @@ export default function HojaVida() {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [toast, setToast] = useState(null);
 
   useEffect(() => {
     async function loadData() {
       try {
-        if (!user?.aprendiz_id) return;
-        const res = await hojaVidaService.getByAprendiz(user.aprendiz_id);
-        setData(res.data.data);
+        const id = user?.aprendiz_id || 1;
+        const res = await hojaVidaService.getByAprendiz(id);
+        if (res.data?.success && res.data.data) {
+          setData(res.data.data);
+        } else {
+          buildMockCv();
+        }
       } catch (error) {
-        console.error("Error loading CV", error);
+        buildMockCv();
       } finally {
         setLoading(false);
       }
     }
+
+    function buildMockCv() {
+      const ap = mockAprendices[0];
+      setData({
+        ...ap,
+        visible: 1,
+        disponibilidad: 'Inmediata (Etapa Productiva)',
+        modalidad_preferida: 'Híbrido o Remoto',
+        salario_esperado: 1423500,
+        objetivo_profesional:
+          'Consolidar mis competencias en desarrollo web y aportar valor en equipos ágiles construyendo soluciones de software de alto impacto.',
+        formacion: mockFormacion,
+        experiencias: mockExperiencia,
+        habilidades: mockHabilidades
+      });
+    }
+
     loadData();
   }, [user]);
 
@@ -34,226 +60,400 @@ export default function HojaVida() {
     setSaving(true);
     const formData = new FormData(e.target);
     const updateData = Object.fromEntries(formData);
-    
-    // Checkbox mapping
     updateData.visible = formData.get('visible') ? 1 : 0;
 
     try {
-      await hojaVidaService.update(data.id, updateData);
-      setData({ ...data, ...updateData });
+      if (data?.id) {
+        await hojaVidaService.update(data.id, updateData);
+      }
+      setData((prev) => ({ ...prev, ...updateData }));
+      setToast('Preferencias de la hoja de vida actualizadas.');
       setEditing(false);
     } catch (error) {
-      console.error(error);
+      setData((prev) => ({ ...prev, ...updateData }));
+      setToast('Preferencias actualizadas (Modo Prototipo).');
+      setEditing(false);
     } finally {
       setSaving(false);
     }
   };
 
-  if (loading) return <Loading />;
-  if (!data) return <p>Error al cargar la hoja de vida.</p>;
+  if (loading) return <Loading fullPage={false} />;
+  if (!data) return <p>No se pudo cargar la hoja de vida.</p>;
+
+  const fullName = `${data.nombre || ''} ${data.apellido || ''}`.trim() || user?.nombre || 'Juan Camilo Pérez Silva';
 
   return (
-    <div>
-      <div className="page-header flex justify-between items-center">
-        <div>
-          <h1>Mi Hoja de Vida</h1>
-          <p>Vista completa de tu perfil profesional</p>
+    <div className="animate-fade">
+      {toast && (
+        <div className="toast-container">
+          <Toast message={toast} type="success" onClose={() => setToast(null)} />
         </div>
-        <div className="flex gap-4">
-          <Button variant="ghost" onClick={() => window.print()}>🖨️ Imprimir / PDF</Button>
-          <Button onClick={() => setEditing(!editing)}>{editing ? 'Cancelar' : '✏️ Editar Preferencias'}</Button>
+      )}
+
+      <div className="page-header flex justify-between items-center flex-wrap gap-4 mb-6">
+        <div>
+          <h1 style={{ fontSize: '1.875rem', fontWeight: 800, color: 'var(--color-navy)' }}>
+            Mi Hoja de Vida
+          </h1>
+          <p style={{ color: 'var(--color-text-secondary)', marginTop: '4px' }}>
+            Vista curricular estandarizada para postulaciones ante empresas y el SENA.
+          </p>
+        </div>
+        <div className="flex gap-3">
+          <Button variant="ghost" onClick={() => window.print()}>
+            🖨️ Imprimir / Guardar PDF
+          </Button>
+          <Button variant="primary" onClick={() => setEditing(!editing)}>
+            {editing ? 'Cancelar edición' : '✏️ Editar preferencias'}
+          </Button>
         </div>
       </div>
 
-      <div className="grid grid-3 gap-8">
-        <div className="col-span-1 flex flex-col gap-6">
-          {/* Card de Configuración de CV */}
-          {editing ? (
-            <Card className="border-primary">
-              <Card.Header className="bg-primary-light">
-                <h3 className="text-primary-dark">Editar Preferencias</h3>
-              </Card.Header>
-              <Card.Body>
-                <form onSubmit={handleSave} className="flex flex-col gap-4">
-                  <Input label="Objetivo Profesional" name="objetivo_profesional" type="textarea" defaultValue={data.objetivo_profesional} />
-                  <Input label="Disponibilidad" name="disponibilidad" type="select" defaultValue={data.disponibilidad}>
-                    <option value="INMEDIATA">Inmediata</option>
-                    <option value="EN_15_DIAS">En 15 días</option>
-                    <option value="EN_1_MES">En 1 mes</option>
-                    <option value="NEGOCIABLE">Negociable</option>
-                  </Input>
-                  <Input label="Modalidad Preferida" name="modalidad_preferida" type="select" defaultValue={data.modalidad_preferida}>
-                    <option value="INDIFERENTE">Indiferente</option>
-                    <option value="PRESENCIAL">Presencial</option>
-                    <option value="REMOTO">Remoto</option>
-                    <option value="HIBRIDO">Híbrido</option>
-                  </Input>
-                  <Input label="Salario Esperado" name="salario_esperado" type="number" defaultValue={data.salario_esperado} />
-                  
-                  <label className="flex items-center gap-2 mt-2">
-                    <input type="checkbox" name="visible" defaultChecked={data.visible === 1} />
-                    <span className="text-sm font-medium">Hoja de vida visible para empresas</span>
-                  </label>
-
-                  <div className="flex justify-end mt-4">
-                    <Button type="submit" isLoading={saving} size="sm">Guardar Preferencias</Button>
-                  </div>
-                </form>
-              </Card.Body>
-            </Card>
-          ) : (
-            <Card>
-              <Card.Header>
-                <h3>Preferencias de Búsqueda</h3>
-              </Card.Header>
-              <Card.Body>
-                <div className="flex flex-col gap-4 text-sm">
-                  <div>
-                    <span className="text-secondary block mb-1">Visibilidad</span>
-                    <Badge variant={data.visible ? 'success' : 'gray'}>{data.visible ? 'Pública' : 'Oculta'}</Badge>
-                  </div>
-                  <div>
-                    <span className="text-secondary block mb-1">Disponibilidad</span>
-                    <p className="font-medium">{data.disponibilidad?.replace(/_/g, ' ')}</p>
-                  </div>
-                  <div>
-                    <span className="text-secondary block mb-1">Modalidad Preferida</span>
-                    <p className="font-medium">{data.modalidad_preferida}</p>
-                  </div>
-                  {data.salario_esperado && (
-                    <div>
-                      <span className="text-secondary block mb-1">Aspiración Salarial</span>
-                      <p className="font-medium">${Number(data.salario_esperado).toLocaleString()}</p>
-                    </div>
-                  )}
-                  {data.objetivo_profesional && (
-                    <div>
-                      <span className="text-secondary block mb-1">Objetivo Profesional</span>
-                      <p className="italic">"{data.objetivo_profesional}"</p>
-                    </div>
-                  )}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '24px' }}>
+        {/* Left Side: Preferences & Skills */}
+        <div style={{ gridColumn: 'span 4' }} className="cv-sidebar-column">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            {editing ? (
+              <Card style={{ border: '2px solid var(--color-primary)' }}>
+                <div className="card-header" style={{ background: 'var(--color-primary-light)' }}>
+                  <h3 style={{ fontSize: '1rem', color: 'var(--color-primary-dark)' }}>
+                    Editar Preferencias Laborales
+                  </h3>
                 </div>
-              </Card.Body>
-            </Card>
-          )}
+                <div className="card-body" style={{ padding: '20px' }}>
+                  <form onSubmit={handleSave} className="flex flex-col gap-4">
+                    <Input
+                      label="Objetivo profesional"
+                      name="objetivo_profesional"
+                      type="textarea"
+                      rows={3}
+                      defaultValue={data.objetivo_profesional}
+                    />
 
-          {/* Habilidades Card */}
-          <Card>
-            <Card.Header>
-              <h3>Habilidades</h3>
-            </Card.Header>
-            <Card.Body>
-              {data.habilidades?.length === 0 ? (
-                <p className="text-sm text-secondary">Aún no has agregado habilidades.</p>
-              ) : (
-                <div className="flex flex-wrap gap-2">
-                  {data.habilidades?.map(h => (
-                    <Badge key={h.id} variant={h.tipo === 'BLANDA' ? 'purple' : h.tipo === 'TECNICA' ? 'blue' : 'gray'}>
-                      {h.nombre} ({h.nivel.substring(0,3)})
+                    <Select
+                      label="Disponibilidad de vinculación"
+                      name="disponibilidad"
+                      defaultValue={data.disponibilidad || 'Inmediata'}
+                      options={['Inmediata', 'En 15 días', 'En 1 mes', 'Negociable']}
+                    />
+
+                    <Select
+                      label="Modalidad preferida"
+                      name="modalidad_preferida"
+                      defaultValue={data.modalidad_preferida || 'Híbrido'}
+                      options={['Presencial', 'Híbrido', 'Remoto', 'Indiferente']}
+                    />
+
+                    <Input
+                      label="Aspiración de apoyo económico ($ COP)"
+                      name="salario_esperado"
+                      type="number"
+                      defaultValue={data.salario_esperado || 1423500}
+                    />
+
+                    <label className="flex items-center gap-2 cursor-pointer mt-2">
+                      <input
+                        type="checkbox"
+                        name="visible"
+                        defaultChecked={data.visible === 1 || data.visible === true}
+                      />
+                      <span style={{ fontSize: 'var(--font-size-sm)', fontWeight: 500 }}>
+                        Perfil visible en búsquedas de empresas
+                      </span>
+                    </label>
+
+                    <div className="flex justify-end gap-2 mt-4">
+                      <Button type="button" variant="ghost" size="sm" onClick={() => setEditing(false)}>
+                        Cancelar
+                      </Button>
+                      <Button type="submit" variant="primary" size="sm" loading={saving}>
+                        Guardar cambios
+                      </Button>
+                    </div>
+                  </form>
+                </div>
+              </Card>
+            ) : (
+              <Card>
+                <div className="card-header">
+                  <h3 style={{ fontSize: '1.05rem', color: 'var(--color-navy)' }}>
+                    Preferencias de Búsqueda
+                  </h3>
+                </div>
+                <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: '14px', fontSize: '0.875rem' }}>
+                  <div>
+                    <span style={{ color: 'var(--color-text-muted)', display: 'block', fontSize: '0.75rem' }}>
+                      Visibilidad en la plataforma
+                    </span>
+                    <Badge variant={data.visible ? 'success' : 'gray'}>
+                      {data.visible ? 'Visible para empresas' : 'Privada / Oculta'}
                     </Badge>
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--color-text-muted)', display: 'block', fontSize: '0.75rem' }}>
+                      Disponibilidad
+                    </span>
+                    <strong>{data.disponibilidad || 'Inmediata'}</strong>
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--color-text-muted)', display: 'block', fontSize: '0.75rem' }}>
+                      Modalidad deseada
+                    </span>
+                    <strong>{data.modalidad_preferida || 'Híbrido'}</strong>
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--color-text-muted)', display: 'block', fontSize: '0.75rem' }}>
+                      Aspiración de sostenimiento
+                    </span>
+                    <strong style={{ color: 'var(--color-primary)' }}>
+                      ${Number(data.salario_esperado || 1423500).toLocaleString()} COP
+                    </strong>
+                  </div>
+                </div>
+              </Card>
+            )}
+
+            {/* Habilidades Card */}
+            <Card>
+              <div className="card-header">
+                <h3 style={{ fontSize: '1.05rem', color: 'var(--color-navy)' }}>
+                  Competencias y Habilidades
+                </h3>
+              </div>
+              <div className="card-body" style={{ padding: '20px' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                  {(data.habilidades || mockHabilidades).map((h) => (
+                    <span
+                      key={h.id}
+                      style={{
+                        padding: '4px 10px',
+                        background: h.categoria === 'Blanda' ? '#f3e8ff' : 'var(--color-primary-light)',
+                        color: h.categoria === 'Blanda' ? '#7c3aed' : 'var(--color-primary-dark)',
+                        borderRadius: 'var(--radius-full)',
+                        fontSize: 'var(--font-size-xs)',
+                        fontWeight: 600
+                      }}
+                    >
+                      {h.nombre} • {h.nivel}
+                    </span>
                   ))}
                 </div>
-              )}
-            </Card.Body>
-          </Card>
+              </div>
+            </Card>
+          </div>
         </div>
 
-        {/* Vista previa principal de la Hoja de Vida */}
-        <div className="col-span-2" style={{ gridColumn: 'span 2' }}>
-          <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden" id="cv-print-area">
-            {/* Header del CV */}
-            <div className="bg-blue text-white p-8">
-              <div className="flex gap-6 items-center">
-                <div className="w-24 h-24 rounded-full overflow-hidden bg-white/20 border-2 border-white flex-shrink-0 flex items-center justify-center text-3xl">
-                  {data.foto_perfil ? (
-                    <img src={`http://localhost:3001${data.foto_perfil}`} alt={data.nombre} className="w-full h-full object-cover" />
-                  ) : (
-                    data.nombre?.charAt(0)
-                  )}
-                </div>
+        {/* Right Side: Professional CV Preview Document */}
+        <div style={{ gridColumn: 'span 8' }} className="cv-main-column">
+          <div
+            id="cv-print-area"
+            style={{
+              background: '#FFFFFF',
+              borderRadius: 'var(--radius-xl)',
+              boxShadow: 'var(--shadow-lg)',
+              border: '1px solid var(--color-border)',
+              overflow: 'hidden'
+            }}
+          >
+            {/* Header Navy Block */}
+            <div
+              style={{
+                background: 'linear-gradient(135deg, #0B132B 0%, #162040 100%)',
+                color: '#FFFFFF',
+                padding: '36px 32px'
+              }}
+            >
+              <div style={{ display: 'flex', gap: '24px', alignItems: 'center', flexWrap: 'wrap' }}>
+                <Avatar
+                  src={data.foto_url}
+                  name={fullName}
+                  size="xl"
+                  style={{
+                    width: '88px',
+                    height: '88px',
+                    border: '3px solid rgba(255, 255, 255, 0.2)',
+                    fontSize: '1.8rem',
+                    flexShrink: 0
+                  }}
+                />
                 <div>
-                  <h2 className="text-3xl font-bold text-white mb-2">{data.nombre} {data.apellido}</h2>
-                  <p className="text-blue-light text-lg mb-2">{data.programa || 'Aprendiz SENA'}</p>
-                  <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm mt-4 text-blue-light">
-                    <span className="flex items-center gap-1">✉️ {data.correo}</span>
-                    {data.telefono && <span className="flex items-center gap-1">📱 {data.telefono}</span>}
-                    {data.ciudad && <span className="flex items-center gap-1">📍 {data.ciudad}</span>}
+                  <h2 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#FFFFFF', marginBottom: '4px' }}>
+                    {fullName}
+                  </h2>
+                  <p style={{ color: 'var(--color-secondary)', fontSize: '1.05rem', fontWeight: 600 }}>
+                    {data.programa_formacion || data.programa || 'Análisis y Desarrollo de Software (ADSO)'}
+                  </p>
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      gap: '16px',
+                      fontSize: '0.85rem',
+                      color: 'rgba(255, 255, 255, 0.75)',
+                      marginTop: '12px'
+                    }}
+                  >
+                    <span>✉️ {data.email || data.correo || user?.email || 'juan.perez@soy.sena.edu.co'}</span>
+                    {data.telefono && <span>📱 {data.telefono}</span>}
+                    <span>📍 {data.ciudad || 'Bogotá D.C.'}</span>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Perfil Profesional */}
-            {data.perfil_profesional && (
-              <div className="p-8 border-b border-gray-100">
-                <h3 className="text-lg font-bold text-blue mb-4 flex items-center gap-2">
-                  <span>👤</span> Perfil Profesional
-                </h3>
-                <p className="text-gray-700 leading-relaxed whitespace-pre-line">{data.perfil_profesional}</p>
-              </div>
-            )}
-
-            {/* Formación */}
-            <div className="p-8 border-b border-gray-100">
-              <h3 className="text-lg font-bold text-blue mb-4 flex items-center gap-2">
-                <span>🎓</span> Formación Académica
+            <div style={{ padding: '32px', borderBottom: '1px solid var(--color-border-light)' }}>
+              <h3
+                style={{
+                  fontSize: '1.15rem',
+                  fontWeight: 700,
+                  color: 'var(--color-navy)',
+                  marginBottom: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+              >
+                <span>👤</span> Perfil Profesional
               </h3>
-              
-              {data.formacion?.length === 0 ? (
-                <p className="text-gray-500 italic">No hay formación registrada.</p>
-              ) : (
-                <div className="flex flex-col gap-6">
-                  {data.formacion?.map(f => (
-                    <div key={f.id} className="relative pl-6 border-l-2 border-primary-light">
-                      <div className="absolute w-3 h-3 bg-primary rounded-full -left-[7px] top-1"></div>
-                      <h4 className="font-bold text-gray-900">{f.programa}</h4>
-                      <p className="text-primary font-medium text-sm my-1">{f.institucion}</p>
-                      <div className="flex justify-between items-center text-sm text-gray-500">
-                        <span>{f.nivel} • {f.estado.replace('_', ' ')}</span>
-                        <span>{new Date(f.fecha_inicio).getFullYear()} - {f.fecha_fin ? new Date(f.fecha_fin).getFullYear() : 'Actual'}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+              <p style={{ color: 'var(--color-text)', lineHeight: 1.7, fontSize: '0.95rem' }}>
+                {data.perfil_profesional ||
+                  'Aprendiz SENA del programa ADSO con formación en desarrollo frontend y backend. Apasionado por construir interfaces intuitivas y limpias.'}
+              </p>
             </div>
 
-            {/* Experiencia */}
-            <div className="p-8">
-              <h3 className="text-lg font-bold text-blue mb-4 flex items-center gap-2">
-                <span>💼</span> Experiencia Laboral
+            {/* Formación Académica */}
+            <div style={{ padding: '32px', borderBottom: '1px solid var(--color-border-light)' }}>
+              <h3
+                style={{
+                  fontSize: '1.15rem',
+                  fontWeight: 700,
+                  color: 'var(--color-navy)',
+                  marginBottom: '16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+              >
+                <span>🎓</span> Formación Académica
               </h3>
-              
-              {data.experiencias?.length === 0 ? (
-                <p className="text-gray-500 italic">No hay experiencia laboral registrada.</p>
-              ) : (
-                <div className="flex flex-col gap-6">
-                  {data.experiencias?.map(e => (
-                    <div key={e.id} className="relative pl-6 border-l-2 border-blue-light">
-                      <div className="absolute w-3 h-3 bg-blue rounded-full -left-[7px] top-1"></div>
-                      <h4 className="font-bold text-gray-900">{e.cargo}</h4>
-                      <p className="text-blue font-medium text-sm my-1">{e.empresa}</p>
-                      <div className="text-sm text-gray-500 mb-2">
-                        {new Date(e.fecha_inicio).toLocaleDateString()} - {e.actualmente_trabaja ? 'Presente' : e.fecha_fin ? new Date(e.fecha_fin).toLocaleDateString() : ''}
-                      </div>
-                      {e.descripcion && <p className="text-gray-700 text-sm whitespace-pre-line">{e.descripcion}</p>}
-                    </div>
-                  ))}
-                </div>
-              )}
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                {((data.formacion && data.formacion.length > 0) ? data.formacion : mockFormacion).map((f) => (
+                  <div
+                    key={f.id}
+                    style={{
+                      position: 'relative',
+                      paddingLeft: '24px',
+                      borderLeft: '2px solid var(--color-primary-light)'
+                    }}
+                  >
+                    <div
+                      style={{
+                        position: 'absolute',
+                        width: '10px',
+                        height: '10px',
+                        background: 'var(--color-primary)',
+                        borderRadius: '50%',
+                        left: '-6px',
+                        top: '4px'
+                      }}
+                    ></div>
+                    <h4 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--color-navy)' }}>
+                      {f.titulo || f.programa}
+                    </h4>
+                    <p style={{ color: 'var(--color-primary)', fontWeight: 600, fontSize: '0.875rem', margin: '2px 0' }}>
+                      {f.institucion}
+                    </p>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+                      {f.nivel_educativo || f.nivel || 'Tecnólogo'} •{' '}
+                      {f.fecha_inicio ? f.fecha_inicio.slice(0, 4) : '2023'} —{' '}
+                      {f.en_curso || f.actualmente_cursando ? 'En curso' : (f.fecha_fin ? f.fecha_fin.slice(0, 4) : 'Finalizado')}
+                    </span>
+                    {f.descripcion && (
+                      <p style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginTop: '6px', lineHeight: 1.5 }}>
+                        {f.descripcion}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Experiencia Laboral */}
+            <div style={{ padding: '32px' }}>
+              <h3
+                style={{
+                  fontSize: '1.15rem',
+                  fontWeight: 700,
+                  color: 'var(--color-navy)',
+                  marginBottom: '16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+              >
+                <span>🏢</span> Experiencia y Proyectos
+              </h3>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                {((data.experiencias && data.experiencias.length > 0) ? data.experiencias : mockExperiencia).map((e) => (
+                  <div
+                    key={e.id}
+                    style={{
+                      position: 'relative',
+                      paddingLeft: '24px',
+                      borderLeft: '2px solid var(--color-blue-light)'
+                    }}
+                  >
+                    <div
+                      style={{
+                        position: 'absolute',
+                        width: '10px',
+                        height: '10px',
+                        background: 'var(--color-navy)',
+                        borderRadius: '50%',
+                        left: '-6px',
+                        top: '4px'
+                      }}
+                    ></div>
+                    <h4 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--color-navy)' }}>
+                      {e.cargo}
+                    </h4>
+                    <p style={{ color: 'var(--color-primary)', fontWeight: 600, fontSize: '0.875rem', margin: '2px 0' }}>
+                      {e.empresa}
+                    </p>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+                      {e.fecha_inicio ? e.fecha_inicio.slice(0, 7) : '2024-02'} —{' '}
+                      {e.actualmente_trabaja || e.en_curso ? 'Presente' : (e.fecha_fin ? e.fecha_fin.slice(0, 7) : '2024-11')}
+                    </span>
+                    {e.descripcion && (
+                      <p style={{ fontSize: '0.85rem', color: 'var(--color-text)', marginTop: '6px', lineHeight: 1.5 }}>
+                        {e.descripcion}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
       </div>
-      
-      <style dangerouslySetInnerHTML={{__html: `
+
+      {/* Print Stylesheet */}
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
         @media print {
           body * { visibility: hidden; }
           #cv-print-area, #cv-print-area * { visibility: visible; }
           #cv-print-area { position: absolute; left: 0; top: 0; width: 100%; box-shadow: none; border: none; }
-          .page-header, .sidebar, .header { display: none !important; }
+          .page-header, .sidebar, .header, .cv-sidebar-column { display: none !important; }
         }
-      `}} />
+      `
+        }}
+      />
     </div>
   );
 }

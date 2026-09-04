@@ -4,9 +4,13 @@ import { formacionService } from '../../services';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
-import Alert from '../../components/common/Alert';
+import Modal from '../../components/common/Modal';
+import ConfirmDialog from '../../components/common/ConfirmDialog';
+import Toast from '../../components/common/Toast';
+import Select from '../../components/common/Select';
 import EmptyState from '../../components/common/EmptyState';
 import Loading from '../../components/common/Loading';
+import { mockFormacion } from '../../data/mockData';
 
 export default function Formacion() {
   const { user } = useAuth();
@@ -15,8 +19,9 @@ export default function Formacion() {
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({});
-  const [message, setMessage] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [toast, setToast] = useState(null);
+  const [deleteTargetId, setDeleteTargetId] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -24,10 +29,15 @@ export default function Formacion() {
 
   async function loadData() {
     try {
-      const res = await formacionService.list(user.aprendiz_id);
-      setData(res.data.data);
+      const id = user?.aprendiz_id || 1;
+      const res = await formacionService.list(id);
+      if (res.data?.success && Array.isArray(res.data.data) && res.data.data.length > 0) {
+        setData(res.data.data);
+      } else {
+        setData(mockFormacion);
+      }
     } catch (error) {
-      console.error(error);
+      setData(mockFormacion);
     } finally {
       setLoading(false);
     }
@@ -35,7 +45,19 @@ export default function Formacion() {
 
   const handleOpenModal = (item = null) => {
     setEditingId(item?.id || null);
-    setFormData(item || { actualmente_cursando: false, estado: 'EN_CURSO', nivel: 'TECNICO' });
+    setFormData(
+      item || {
+        institucion: '',
+        titulo: '',
+        programa: '',
+        nivel_educativo: 'Tecnólogo',
+        nivel: 'TECNOLOGO',
+        fecha_inicio: '',
+        fecha_fin: '',
+        en_curso: false,
+        descripcion: ''
+      }
+    );
     setShowModal(true);
   };
 
@@ -47,7 +69,7 @@ export default function Formacion() {
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
@@ -56,148 +78,283 @@ export default function Formacion() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
+    const payload = {
+      ...formData,
+      aprendiz_id: user?.aprendiz_id || 1,
+      titulo: formData.titulo || formData.programa,
+      programa: formData.titulo || formData.programa
+    };
+
     try {
-      const payload = { ...formData, aprendiz_id: user.aprendiz_id };
-      
       if (editingId) {
         await formacionService.update(editingId, payload);
-        setMessage({ type: 'success', text: 'Formación actualizada.' });
+        setData((prev) => prev.map((item) => (item.id === editingId ? { ...item, ...payload } : item)));
+        setToast('Estudio actualizado correctamente.');
       } else {
+        const newId = Date.now();
         await formacionService.create(payload);
-        setMessage({ type: 'success', text: 'Formación agregada.' });
+        setData((prev) => [{ ...payload, id: newId }, ...prev]);
+        setToast('Estudio agregado exitosamente.');
       }
       handleCloseModal();
-      loadData();
     } catch (error) {
-      setMessage({ type: 'error', text: error.response?.data?.message || 'Error al guardar.' });
+      // Mock fallback
+      if (editingId) {
+        setData((prev) => prev.map((item) => (item.id === editingId ? { ...item, ...payload } : item)));
+        setToast('Estudio actualizado (Modo Prototipo).');
+      } else {
+        const newId = Date.now();
+        setData((prev) => [{ ...payload, id: newId }, ...prev]);
+        setToast('Estudio agregado (Modo Prototipo).');
+      }
+      handleCloseModal();
     } finally {
       setSaving(false);
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('¿Seguro que deseas eliminar este registro?')) return;
+  const confirmDelete = async () => {
+    if (!deleteTargetId) return;
     try {
-      await formacionService.delete(id);
-      setMessage({ type: 'success', text: 'Registro eliminado.' });
-      loadData();
+      await formacionService.delete(deleteTargetId);
+      setData((prev) => prev.filter((item) => item.id !== deleteTargetId));
+      setToast('Registro académico eliminado.');
     } catch (error) {
-      setMessage({ type: 'error', text: 'Error al eliminar.' });
+      setData((prev) => prev.filter((item) => item.id !== deleteTargetId));
+      setToast('Registro eliminado (Modo Prototipo).');
+    } finally {
+      setDeleteTargetId(null);
     }
   };
 
-  if (loading) return <Loading />;
+  if (loading) return <Loading fullPage={false} />;
 
   return (
-    <div>
-      <div className="page-header flex justify-between items-center">
-        <div>
-          <h1>Formación Académica</h1>
-          <p>Registra tus estudios, cursos y programas del SENA</p>
+    <div className="animate-fade">
+      {toast && (
+        <div className="toast-container">
+          <Toast message={toast} type="success" onClose={() => setToast(null)} />
         </div>
-        <Button onClick={() => handleOpenModal()}>+ Agregar Formación</Button>
+      )}
+
+      {/* Reusable ConfirmDialog */}
+      <ConfirmDialog
+        isOpen={!!deleteTargetId}
+        title="Eliminar formación académica"
+        message="¿Estás seguro de que deseas eliminar este registro de tu hoja de vida? Esta acción no se puede deshacer."
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        type="danger"
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteTargetId(null)}
+      />
+
+      <div className="page-header flex justify-between items-center flex-wrap gap-4 mb-6">
+        <div>
+          <h1 style={{ fontSize: '1.875rem', fontWeight: 800, color: 'var(--color-navy)' }}>
+            Formación Académica
+          </h1>
+          <p style={{ color: 'var(--color-text-secondary)', marginTop: '4px' }}>
+            Registra tus estudios formales, programas del SENA, cursos y certificaciones.
+          </p>
+        </div>
+        <Button variant="primary" onClick={() => handleOpenModal()}>
+          + Agregar estudio
+        </Button>
       </div>
 
-      {message && <Alert variant={message.type} className="mb-6">{message.text}</Alert>}
-
       {data.length === 0 ? (
-        <EmptyState 
+        <EmptyState
           icon="🎓"
-          title="No hay formación registrada"
-          description="Agrega tus estudios secundarios, programas del SENA o cursos relevantes para mejorar tu perfil."
-          action={<Button onClick={() => handleOpenModal()}>Agregar Formación</Button>}
+          title="Sin formación registrada"
+          description="Agrega tus programas formativos del SENA o estudios anteriores para potenciar tu perfil."
+          action={
+            <Button variant="primary" onClick={() => handleOpenModal()}>
+              Agregar mi primer estudio
+            </Button>
+          }
         />
       ) : (
         <div className="flex flex-col gap-4">
-          {data.map(item => (
-            <Card key={item.id} className="border-l-4 border-l-primary hover:shadow-md transition-shadow">
-              <Card.Body className="flex justify-between items-start">
-                <div>
-                  <h3 className="text-xl font-bold mb-1">{item.programa}</h3>
-                  <p className="text-lg text-primary font-medium mb-2">{item.institucion}</p>
-                  
-                  <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-secondary">
-                    <span className="flex items-center gap-1">🏷️ {item.nivel.replace(/_/g, ' ')}</span>
-                    <span className="flex items-center gap-1">
-                      📅 {new Date(item.fecha_inicio).toLocaleDateString()} - {item.actualmente_cursando ? 'Actualidad' : (item.fecha_fin ? new Date(item.fecha_fin).toLocaleDateString() : '')}
-                    </span>
-                    <span className="flex items-center gap-1">📌 {item.estado.replace('_', ' ')}</span>
+          {data.map((item) => {
+            const title = item.titulo || item.programa;
+            const level = item.nivel_educativo || item.nivel || 'Tecnólogo';
+            return (
+              <Card
+                key={item.id}
+                className="card-interactive"
+                style={{
+                  borderLeft: '4px solid var(--color-primary)',
+                  padding: '24px'
+                }}
+              >
+                <div className="flex justify-between items-start flex-wrap gap-4">
+                  <div style={{ flex: 1, minWidth: '280px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                      <span
+                        style={{
+                          fontSize: 'var(--font-size-xs)',
+                          fontWeight: 700,
+                          background: 'var(--color-primary-light)',
+                          color: 'var(--color-primary-dark)',
+                          padding: '2px 10px',
+                          borderRadius: 'var(--radius-full)'
+                        }}
+                      >
+                        {level}
+                      </span>
+                      {(item.en_curso || item.actualmente_cursando) && (
+                        <span
+                          style={{
+                            fontSize: 'var(--font-size-xs)',
+                            fontWeight: 700,
+                            background: '#eff6ff',
+                            color: '#1d4ed8',
+                            padding: '2px 10px',
+                            borderRadius: 'var(--radius-full)'
+                          }}
+                        >
+                          En curso actualmente
+                        </span>
+                      )}
+                    </div>
+
+                    <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--color-navy)', marginBottom: '4px' }}>
+                      {title}
+                    </h3>
+                    <p style={{ color: 'var(--color-primary)', fontWeight: 600, fontSize: '0.95rem', marginBottom: '8px' }}>
+                      {item.institucion}
+                    </p>
+
+                    <div className="flex flex-wrap gap-4 text-xs" style={{ color: 'var(--color-text-muted)' }}>
+                      <span>
+                        📅 {item.fecha_inicio ? item.fecha_inicio.slice(0, 10) : '2023'} —{' '}
+                        {item.en_curso || item.actualmente_cursando
+                          ? 'Presente'
+                          : item.fecha_fin
+                          ? item.fecha_fin.slice(0, 10)
+                          : 'Finalizado'}
+                      </span>
+                    </div>
+
+                    {item.descripcion && (
+                      <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.875rem', marginTop: '12px', lineHeight: 1.5 }}>
+                        {item.descripcion}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button variant="ghost" size="sm" onClick={() => handleOpenModal(item)}>
+                      Editar
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setDeleteTargetId(item.id)}
+                      style={{ color: 'var(--color-error)' }}
+                    >
+                      Eliminar
+                    </Button>
                   </div>
                 </div>
-                
-                <div className="flex gap-2">
-                  <Button variant="ghost" size="sm" onClick={() => handleOpenModal(item)}>Editar</Button>
-                  <Button variant="ghost" size="sm" onClick={() => handleDelete(item.id)} className="text-error">Eliminar</Button>
-                </div>
-              </Card.Body>
-            </Card>
-          ))}
+              </Card>
+            );
+          })}
         </div>
       )}
 
-      {/* Modal Agregar/Editar */}
-      {showModal && (
-        <div className="modal-backdrop">
-          <div className="modal">
-            <div className="modal-header">
-              <h3>{editingId ? 'Editar Formación' : 'Agregar Formación'}</h3>
-              <button className="modal-close" onClick={handleCloseModal}>✕</button>
-            </div>
-            <form onSubmit={handleSubmit}>
-              <div className="modal-body flex flex-col gap-4">
-                <Input label="Institución Educativa" name="institucion" required value={formData.institucion || ''} onChange={handleInputChange} />
-                <Input label="Programa / Título" name="programa" required value={formData.programa || ''} onChange={handleInputChange} />
-                
-                <Input label="Nivel Académico" name="nivel" type="select" required value={formData.nivel || ''} onChange={handleInputChange}>
-                  <option value="BACHILLERATO">Bachillerato</option>
-                  <option value="TECNICO">Técnico</option>
-                  <option value="TECNOLOGO">Tecnólogo</option>
-                  <option value="PROFESIONAL">Profesional</option>
-                  <option value="ESPECIALIZACION">Especialización</option>
-                  <option value="MAESTRIA">Maestría</option>
-                  <option value="CURSO">Curso Corto</option>
-                  <option value="OTRO">Otro</option>
-                </Input>
+      {/* Reusable Modal Component */}
+      <Modal
+        isOpen={showModal}
+        onClose={handleCloseModal}
+        title={editingId ? 'Editar formación académica' : 'Registrar nueva formación'}
+        footer={
+          <>
+            <Button variant="ghost" onClick={handleCloseModal}>
+              Cancelar
+            </Button>
+            <Button variant="primary" onClick={handleSubmit} loading={saving}>
+              Guardar formación
+            </Button>
+          </>
+        }
+      >
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <Input
+            label="Institución educativa"
+            name="institucion"
+            required
+            placeholder="Ej: Servicio Nacional de Aprendizaje (SENA)"
+            value={formData.institucion || ''}
+            onChange={handleInputChange}
+          />
 
-                <div className="form-row">
-                  <Input label="Fecha de Inicio" name="fecha_inicio" type="date" required value={formData.fecha_inicio?.split('T')[0] || ''} onChange={handleInputChange} />
-                  <Input 
-                    label="Fecha de Fin" 
-                    name="fecha_fin" 
-                    type="date" 
-                    value={formData.fecha_fin?.split('T')[0] || ''} 
-                    onChange={handleInputChange} 
-                    disabled={formData.actualmente_cursando}
-                    required={!formData.actualmente_cursando}
-                  />
-                </div>
+          <Input
+            label="Programa, carrera o título obtenido"
+            name="titulo"
+            required
+            placeholder="Ej: Análisis y Desarrollo de Software (ADSO)"
+            value={formData.titulo || formData.programa || ''}
+            onChange={handleInputChange}
+          />
 
-                <div className="form-row items-center">
-                  <label className="flex items-center gap-2 mt-4 cursor-pointer">
-                    <input 
-                      type="checkbox" 
-                      name="actualmente_cursando" 
-                      checked={formData.actualmente_cursando || false}
-                      onChange={handleInputChange} 
-                    />
-                    <span className="text-sm font-medium">Actualmente cursando</span>
-                  </label>
-                  
-                  <Input label="Estado" name="estado" type="select" required value={formData.estado || ''} onChange={handleInputChange}>
-                    <option value="EN_CURSO">En Curso</option>
-                    <option value="GRADUADO">Graduado/Finalizado</option>
-                    <option value="INCOMPLETO">Incompleto / Aplazado</option>
-                  </Input>
-                </div>
-              </div>
-              <div className="modal-footer">
-                <Button variant="ghost" onClick={handleCloseModal}>Cancelar</Button>
-                <Button type="submit" isLoading={saving}>Guardar Formación</Button>
-              </div>
-            </form>
+          <Select
+            label="Nivel de educación"
+            name="nivel_educativo"
+            value={formData.nivel_educativo || 'Tecnólogo'}
+            onChange={handleInputChange}
+            options={[
+              'Técnico',
+              'Tecnólogo',
+              'Bachillerato / Media Técnica',
+              'Profesional Universitario',
+              'Especialización Tecnológica',
+              'Curso Corto / Certificación'
+            ]}
+          />
+
+          <div className="form-row">
+            <Input
+              label="Fecha de inicio"
+              name="fecha_inicio"
+              type="date"
+              value={formData.fecha_inicio ? formData.fecha_inicio.slice(0, 10) : ''}
+              onChange={handleInputChange}
+            />
+            <Input
+              label="Fecha de graduación / fin"
+              name="fecha_fin"
+              type="date"
+              disabled={formData.en_curso}
+              value={formData.fecha_fin ? formData.fecha_fin.slice(0, 10) : ''}
+              onChange={handleInputChange}
+            />
           </div>
-        </div>
-      )}
+
+          <label className="flex items-center gap-2 cursor-pointer" style={{ marginTop: '-4px' }}>
+            <input
+              type="checkbox"
+              name="en_curso"
+              checked={formData.en_curso || false}
+              onChange={handleInputChange}
+            />
+            <span style={{ fontSize: 'var(--font-size-sm)', fontWeight: 500, color: 'var(--color-text)' }}>
+              Actualmente me encuentro cursando este programa
+            </span>
+          </label>
+
+          <Input
+            label="Descripción o competencias adquiridas (opcional)"
+            name="descripcion"
+            type="textarea"
+            rows={3}
+            placeholder="Menciona logros, tecnologías aprendidas o enfoque del plan de estudios."
+            value={formData.descripcion || ''}
+            onChange={handleInputChange}
+          />
+        </form>
+      </Modal>
     </div>
   );
 }

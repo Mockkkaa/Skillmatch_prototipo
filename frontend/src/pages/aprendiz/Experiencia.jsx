@@ -4,9 +4,12 @@ import { experienciaService } from '../../services';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
-import Alert from '../../components/common/Alert';
+import Modal from '../../components/common/Modal';
+import ConfirmDialog from '../../components/common/ConfirmDialog';
+import Toast from '../../components/common/Toast';
 import EmptyState from '../../components/common/EmptyState';
 import Loading from '../../components/common/Loading';
+import { mockExperiencia } from '../../data/mockData';
 
 export default function Experiencia() {
   const { user } = useAuth();
@@ -15,8 +18,9 @@ export default function Experiencia() {
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({});
-  const [message, setMessage] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [toast, setToast] = useState(null);
+  const [deleteTargetId, setDeleteTargetId] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -24,10 +28,15 @@ export default function Experiencia() {
 
   async function loadData() {
     try {
-      const res = await experienciaService.list(user.aprendiz_id);
-      setData(res.data.data);
+      const id = user?.aprendiz_id || 1;
+      const res = await experienciaService.list(id);
+      if (res.data?.success && Array.isArray(res.data.data) && res.data.data.length > 0) {
+        setData(res.data.data);
+      } else {
+        setData(mockExperiencia);
+      }
     } catch (error) {
-      console.error(error);
+      setData(mockExperiencia);
     } finally {
       setLoading(false);
     }
@@ -35,7 +44,18 @@ export default function Experiencia() {
 
   const handleOpenModal = (item = null) => {
     setEditingId(item?.id || null);
-    setFormData(item || { actualmente_trabaja: false });
+    setFormData(
+      item || {
+        empresa: '',
+        cargo: '',
+        tipo_experiencia: 'Practicante / Aprendiz',
+        fecha_inicio: '',
+        fecha_fin: '',
+        actualmente_trabaja: false,
+        en_curso: false,
+        descripcion: ''
+      }
+    );
     setShowModal(true);
   };
 
@@ -47,7 +67,7 @@ export default function Experiencia() {
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
@@ -56,142 +76,261 @@ export default function Experiencia() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
+    const payload = {
+      ...formData,
+      aprendiz_id: user?.aprendiz_id || 1
+    };
+
     try {
-      const payload = { ...formData, aprendiz_id: user.aprendiz_id };
-      
       if (editingId) {
         await experienciaService.update(editingId, payload);
-        setMessage({ type: 'success', text: 'Experiencia actualizada.' });
+        setData((prev) => prev.map((item) => (item.id === editingId ? { ...item, ...payload } : item)));
+        setToast('Experiencia laboral actualizada.');
       } else {
+        const newId = Date.now();
         await experienciaService.create(payload);
-        setMessage({ type: 'success', text: 'Experiencia agregada.' });
+        setData((prev) => [{ ...payload, id: newId }, ...prev]);
+        setToast('Experiencia agregada correctamente.');
       }
       handleCloseModal();
-      loadData();
     } catch (error) {
-      setMessage({ type: 'error', text: error.response?.data?.message || 'Error al guardar.' });
+      // Mock fallback
+      if (editingId) {
+        setData((prev) => prev.map((item) => (item.id === editingId ? { ...item, ...payload } : item)));
+        setToast('Experiencia actualizada (Modo Prototipo).');
+      } else {
+        const newId = Date.now();
+        setData((prev) => [{ ...payload, id: newId }, ...prev]);
+        setToast('Experiencia agregada (Modo Prototipo).');
+      }
+      handleCloseModal();
     } finally {
       setSaving(false);
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('¿Seguro que deseas eliminar esta experiencia?')) return;
+  const confirmDelete = async () => {
+    if (!deleteTargetId) return;
     try {
-      await experienciaService.delete(id);
-      setMessage({ type: 'success', text: 'Experiencia eliminada.' });
-      loadData();
+      await experienciaService.delete(deleteTargetId);
+      setData((prev) => prev.filter((item) => item.id !== deleteTargetId));
+      setToast('Experiencia laboral eliminada.');
     } catch (error) {
-      setMessage({ type: 'error', text: 'Error al eliminar.' });
+      setData((prev) => prev.filter((item) => item.id !== deleteTargetId));
+      setToast('Experiencia eliminada (Modo Prototipo).');
+    } finally {
+      setDeleteTargetId(null);
     }
   };
 
-  if (loading) return <Loading />;
+  if (loading) return <Loading fullPage={false} />;
 
   return (
-    <div>
-      <div className="page-header flex justify-between items-center">
-        <div>
-          <h1>Experiencia Laboral</h1>
-          <p>Registra tus empleos anteriores, prácticas o proyectos relevantes</p>
+    <div className="animate-fade">
+      {toast && (
+        <div className="toast-container">
+          <Toast message={toast} type="success" onClose={() => setToast(null)} />
         </div>
-        <Button onClick={() => handleOpenModal()}>+ Agregar Experiencia</Button>
+      )}
+
+      <ConfirmDialog
+        isOpen={!!deleteTargetId}
+        title="Eliminar experiencia laboral"
+        message="¿Estás seguro de que deseas eliminar este registro de experiencia laboral de tu perfil?"
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        type="danger"
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteTargetId(null)}
+      />
+
+      <div className="page-header flex justify-between items-center flex-wrap gap-4 mb-6">
+        <div>
+          <h1 style={{ fontSize: '1.875rem', fontWeight: 800, color: 'var(--color-navy)' }}>
+            Experiencia Laboral y Proyectos
+          </h1>
+          <p style={{ color: 'var(--color-text-secondary)', marginTop: '4px' }}>
+            Registra tus prácticas formativas, proyectos académicos destacados o empleos previos.
+          </p>
+        </div>
+        <Button variant="primary" onClick={() => handleOpenModal()}>
+          + Agregar experiencia
+        </Button>
       </div>
 
-      {message && <Alert variant={message.type} className="mb-6">{message.text}</Alert>}
-
       {data.length === 0 ? (
-        <EmptyState 
-          icon="💼"
-          title="No tienes experiencia registrada"
-          description="Si has trabajado antes, hecho prácticas o proyectos freelance, agrégalos aquí. Si no tienes experiencia, no te preocupes, enfócate en tus habilidades."
-          action={<Button onClick={() => handleOpenModal()}>Agregar Experiencia</Button>}
+        <EmptyState
+          icon="🏢"
+          title="Sin experiencia laboral registrada"
+          description="Si no cuentas con experiencia previa en empresas, puedes registrar tus proyectos formativos del SENA."
+          action={
+            <Button variant="primary" onClick={() => handleOpenModal()}>
+              Registrar proyecto o práctica
+            </Button>
+          }
         />
       ) : (
         <div className="flex flex-col gap-4">
-          {data.map(item => (
-            <Card key={item.id} className="border-l-4 border-l-blue hover:shadow-md transition-shadow">
-              <Card.Body className="flex justify-between items-start">
-                <div>
-                  <h3 className="text-xl font-bold mb-1">{item.cargo}</h3>
-                  <p className="text-lg text-blue font-medium mb-2">{item.empresa}</p>
-                  
-                  <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-secondary mb-3">
-                    <span className="flex items-center gap-1">
-                      📅 {new Date(item.fecha_inicio).toLocaleDateString()} - {item.actualmente_trabaja ? 'Actualidad' : (item.fecha_fin ? new Date(item.fecha_fin).toLocaleDateString() : '')}
+          {data.map((item) => (
+            <Card
+              key={item.id}
+              className="card-interactive"
+              style={{
+                borderLeft: '4px solid var(--color-navy)',
+                padding: '24px'
+              }}
+            >
+              <div className="flex justify-between items-start flex-wrap gap-4">
+                <div style={{ flex: 1, minWidth: '280px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                    <span
+                      style={{
+                        fontSize: 'var(--font-size-xs)',
+                        fontWeight: 700,
+                        background: 'var(--color-surface-2)',
+                        color: 'var(--color-navy)',
+                        padding: '2px 10px',
+                        borderRadius: 'var(--radius-full)'
+                      }}
+                    >
+                      {item.tipo_experiencia || 'Práctica / Proyecto SENA'}
+                    </span>
+                    {(item.actualmente_trabaja || item.en_curso) && (
+                      <span
+                        style={{
+                          fontSize: 'var(--font-size-xs)',
+                          fontWeight: 700,
+                          background: 'var(--color-primary-light)',
+                          color: 'var(--color-primary-dark)',
+                          padding: '2px 10px',
+                          borderRadius: 'var(--radius-full)'
+                        }}
+                      >
+                        Actualmente activo
+                      </span>
+                    )}
+                  </div>
+
+                  <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--color-navy)', marginBottom: '4px' }}>
+                    {item.cargo}
+                  </h3>
+                  <p style={{ color: 'var(--color-primary)', fontWeight: 600, fontSize: '0.95rem', marginBottom: '8px' }}>
+                    {item.empresa}
+                  </p>
+
+                  <div className="flex flex-wrap gap-4 text-xs" style={{ color: 'var(--color-text-muted)' }}>
+                    <span>
+                      📅 {item.fecha_inicio ? item.fecha_inicio.slice(0, 10) : '2024'} —{' '}
+                      {item.actualmente_trabaja || item.en_curso
+                        ? 'Actualidad'
+                        : item.fecha_fin
+                        ? item.fecha_fin.slice(0, 10)
+                        : 'Finalizado'}
                     </span>
                   </div>
-                  
+
                   {item.descripcion && (
-                    <p className="text-sm mt-2 whitespace-pre-line text-gray-700 max-w-3xl">
+                    <p style={{ color: 'var(--color-text)', fontSize: '0.875rem', marginTop: '12px', lineHeight: 1.6, whiteSpace: 'pre-line' }}>
                       {item.descripcion}
                     </p>
                   )}
                 </div>
-                
+
                 <div className="flex gap-2">
-                  <Button variant="ghost" size="sm" onClick={() => handleOpenModal(item)}>Editar</Button>
-                  <Button variant="ghost" size="sm" onClick={() => handleDelete(item.id)} className="text-error">Eliminar</Button>
+                  <Button variant="ghost" size="sm" onClick={() => handleOpenModal(item)}>
+                    Editar
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setDeleteTargetId(item.id)}
+                    style={{ color: 'var(--color-error)' }}
+                  >
+                    Eliminar
+                  </Button>
                 </div>
-              </Card.Body>
+              </div>
             </Card>
           ))}
         </div>
       )}
 
-      {/* Modal Agregar/Editar */}
-      {showModal && (
-        <div className="modal-backdrop">
-          <div className="modal">
-            <div className="modal-header">
-              <h3>{editingId ? 'Editar Experiencia' : 'Agregar Experiencia'}</h3>
-              <button className="modal-close" onClick={handleCloseModal}>✕</button>
-            </div>
-            <form onSubmit={handleSubmit}>
-              <div className="modal-body flex flex-col gap-4">
-                <Input label="Empresa" name="empresa" required value={formData.empresa || ''} onChange={handleInputChange} />
-                <Input label="Cargo" name="cargo" required value={formData.cargo || ''} onChange={handleInputChange} />
-                
-                <div className="form-row">
-                  <Input label="Fecha de Inicio" name="fecha_inicio" type="date" required value={formData.fecha_inicio?.split('T')[0] || ''} onChange={handleInputChange} />
-                  <Input 
-                    label="Fecha de Fin" 
-                    name="fecha_fin" 
-                    type="date" 
-                    value={formData.fecha_fin?.split('T')[0] || ''} 
-                    onChange={handleInputChange} 
-                    disabled={formData.actualmente_trabaja}
-                    required={!formData.actualmente_trabaja}
-                  />
-                </div>
+      {/* Reusable Modal */}
+      <Modal
+        isOpen={showModal}
+        onClose={handleCloseModal}
+        title={editingId ? 'Editar experiencia laboral' : 'Registrar nueva experiencia'}
+        footer={
+          <>
+            <Button variant="ghost" onClick={handleCloseModal}>
+              Cancelar
+            </Button>
+            <Button variant="primary" onClick={handleSubmit} loading={saving}>
+              Guardar experiencia
+            </Button>
+          </>
+        }
+      >
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <Input
+            label="Empresa o proyecto formativo"
+            name="empresa"
+            required
+            placeholder="Ej: Proyectos Académicos SENA / Tech Corp"
+            value={formData.empresa || ''}
+            onChange={handleInputChange}
+          />
 
-                <label className="flex items-center gap-2 mt-2 cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    name="actualmente_trabaja" 
-                    checked={formData.actualmente_trabaja || false}
-                    onChange={handleInputChange} 
-                  />
-                  <span className="text-sm font-medium">Actualmente trabajo aquí</span>
-                </label>
+          <Input
+            label="Cargo o rol desempeñado"
+            name="cargo"
+            required
+            placeholder="Ej: Desarrollador Web Junior (Proyecto Formativo)"
+            value={formData.cargo || ''}
+            onChange={handleInputChange}
+          />
 
-                <Input 
-                  label="Descripción de Funciones (Opcional)" 
-                  name="descripcion" 
-                  type="textarea" 
-                  value={formData.descripcion || ''} 
-                  onChange={handleInputChange}
-                  hint="Describe brevemente tus responsabilidades y logros"
-                />
-              </div>
-              <div className="modal-footer">
-                <Button variant="ghost" onClick={handleCloseModal}>Cancelar</Button>
-                <Button type="submit" isLoading={saving}>Guardar Experiencia</Button>
-              </div>
-            </form>
+          <div className="form-row">
+            <Input
+              label="Fecha de inicio"
+              name="fecha_inicio"
+              type="date"
+              value={formData.fecha_inicio ? formData.fecha_inicio.slice(0, 10) : ''}
+              onChange={handleInputChange}
+            />
+            <Input
+              label="Fecha de fin"
+              name="fecha_fin"
+              type="date"
+              disabled={formData.actualmente_trabaja || formData.en_curso}
+              value={formData.fecha_fin ? formData.fecha_fin.slice(0, 10) : ''}
+              onChange={handleInputChange}
+            />
           </div>
-        </div>
-      )}
+
+          <label className="flex items-center gap-2 cursor-pointer" style={{ marginTop: '-4px' }}>
+            <input
+              type="checkbox"
+              name="actualmente_trabaja"
+              checked={formData.actualmente_trabaja || formData.en_curso || false}
+              onChange={handleInputChange}
+            />
+            <span style={{ fontSize: 'var(--font-size-sm)', fontWeight: 500, color: 'var(--color-text)' }}>
+              Actualmente participo en esta experiencia o proyecto
+            </span>
+          </label>
+
+          <Input
+            label="Funciones, logros o responsabilidades"
+            name="descripcion"
+            type="textarea"
+            rows={4}
+            placeholder="Describe las tareas realizadas, herramientas empleadas y logros alcanzados."
+            value={formData.descripcion || ''}
+            onChange={handleInputChange}
+          />
+        </form>
+      </Modal>
     </div>
   );
 }

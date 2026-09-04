@@ -1,8 +1,9 @@
 /* ============================================================
    SKILLMATCH - Responsive CSS
+   Sistema de adaptación multi-dispositivo
    ============================================================ */
 
-/* Tablet landscape */
+/* Tablet landscape & medium screens */
 @media (max-width: 1024px) {
   :root {
     --content-padding: var(--space-6);
@@ -10,31 +11,52 @@
 
   .grid-4 { grid-template-columns: repeat(2, 1fr); }
   .grid-3 { grid-template-columns: repeat(2, 1fr); }
+}
 
-  .dashboard-layout .sidebar {
-    width: var(--sidebar-collapsed);
+/* Tablet portrait & below */
+@media (max-width: 992px) {
+  .filters-column,
+  .results-column,
+  .vacancy-main-column,
+  .vacancy-side-column,
+  .profile-side-column,
+  .profile-main-column,
+  .cv-sidebar-column,
+  .cv-main-column,
+  .empresa-main-col,
+  .empresa-side-col,
+  .empresa-profile-side,
+  .empresa-profile-main,
+  .admin-actions-col,
+  .admin-status-col {
+    grid-column: span 12 !important;
   }
 
-  .sidebar .nav-label,
-  .sidebar .sidebar-brand-text {
-    display: none;
+  .filters-column Card,
+  .profile-side-column Card,
+  .cv-sidebar-column Card {
+    position: static !important;
   }
 }
 
-/* Tablet portrait */
+/* Mobile & small tablets */
 @media (max-width: 768px) {
   :root {
     --content-padding: var(--space-4);
   }
 
-  h1 { font-size: var(--font-size-2xl); }
-  h2 { font-size: var(--font-size-xl); }
+  h1 { font-size: 1.6rem; }
+  h2 { font-size: 1.35rem; }
+  h3 { font-size: 1.15rem; }
 
-  .grid-4 { grid-template-columns: 1fr 1fr; }
-  .grid-3 { grid-template-columns: 1fr 1fr; }
+  .grid-4 { grid-template-columns: 1fr; }
+  .grid-3 { grid-template-columns: 1fr; }
   .grid-2 { grid-template-columns: 1fr; }
 
-  .form-row { grid-template-columns: 1fr; }
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: var(--space-3);
+  }
 
   .modal {
     max-width: 100%;
@@ -47,66 +69,68 @@
     max-height: 90vh;
   }
 
-  .modal-backdrop { align-items: flex-end; padding: 0; }
-
-  .dashboard-layout .sidebar {
-    position: fixed;
-    left: -100%;
-    top: 0;
-    bottom: 0;
-    width: var(--sidebar-width);
-    z-index: var(--z-sticky);
-    transition: left var(--transition-normal);
-  }
-
-  .dashboard-layout .sidebar.open {
-    left: 0;
-  }
-
-  .dashboard-layout .main-content {
-    margin-left: 0 !important;
-  }
-
-  .dashboard-layout .header {
-    left: 0 !important;
+  .modal-backdrop {
+    align-items: flex-end;
+    padding: 0;
   }
 
   .table-container {
-    border-radius: var(--radius-md);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
-  .table th:nth-child(n+4),
-  .table td:nth-child(n+4) {
-    display: none;
+  .table th,
+  .table td {
+    padding: 10px 12px;
+    font-size: var(--font-size-xs);
+  }
+
+  .table-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-bar {
+    max-width: 100% !important;
+    width: 100% !important;
   }
 }
 
-/* Mobile */
+/* Small smartphones */
 @media (max-width: 480px) {
   :root {
     --content-padding: var(--space-4);
   }
 
-  h1 { font-size: var(--font-size-xl); }
-  h2 { font-size: var(--font-size-lg); }
+  h1 { font-size: 1.4rem; }
+  h2 { font-size: 1.2rem; }
 
   .grid-4,
   .grid-3,
-  .grid-2 { grid-template-columns: 1fr; }
+  .grid-2 {
+    grid-template-columns: 1fr;
+  }
 
-  .btn-xl { padding: 14px 24px; }
+  .btn-xl {
+    padding: 12px 20px;
+    font-size: var(--font-size-sm);
+  }
 
-  .container { padding: 0 var(--space-4); }
+  .container {
+    padding: 0 var(--space-4);
+  }
 
-  .card-header, .card-body { padding: var(--space-4); }
+  .card-header,
+  .card-body {
+    padding: var(--space-4);
+  }
 
-  .page-header { margin-bottom: var(--space-6); }
+  .page-header {
+    margin-bottom: var(--space-6);
+  }
 
-  .stat-card { padding: var(--space-4); }
-
-  .table th:nth-child(n+3),
-  .table td:nth-child(n+3) {
-    display: none;
+  .stat-card {
+    padding: var(--space-4);
   }
 
   .hero-buttons {
@@ -114,10 +138,15 @@
     width: 100%;
   }
 
-  .hero-buttons .btn { width: 100%; justify-content: center; }
+  .hero-buttons .btn {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 /* Large screens */
 @media (min-width: 1280px) {
-  .grid-4 { grid-template-columns: repeat(4, 1fr); }
+  .grid-4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }

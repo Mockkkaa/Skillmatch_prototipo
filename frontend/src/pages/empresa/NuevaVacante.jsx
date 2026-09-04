@@ -5,47 +5,48 @@ import { vacanteService } from '../../services';
 import Card from '../../components/common/Card';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
-import Alert from '../../components/common/Alert';
+import FormSection from '../../components/common/FormSection';
+import Select from '../../components/common/Select';
+import Toast from '../../components/common/Toast';
 import Loading from '../../components/common/Loading';
+import { mockVacantes } from '../../data/mockData';
 
 export default function NuevaVacante({ isEdit = false }) {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  
+
   const [data, setData] = useState({
     cargo: '',
     descripcion: '',
     requisitos: '',
-    ubicacion: '',
-    modalidad: 'PRESENCIAL',
-    tipo_contrato: 'INDEFINIDO',
+    beneficios: '',
+    ubicacion: 'Bogotá, D.C.',
+    modalidad: 'Híbrido',
+    tipo_contrato: 'Contrato de Aprendizaje',
     experiencia_requerida: 0,
-    salario: ''
+    salario: '$1.423.500 (100% SMMLV + EPS + ARL)',
+    cupos: 1
   });
-  
+
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState(null);
+  const [toast, setToast] = useState(null);
 
   useEffect(() => {
     if (isEdit && id) {
       async function loadVacante() {
         try {
           const res = await vacanteService.get(id);
-          const v = res.data.data;
-          setData({
-            cargo: v.cargo,
-            descripcion: v.descripcion,
-            requisitos: v.requisitos,
-            ubicacion: v.ubicacion,
-            modalidad: v.modalidad,
-            tipo_contrato: v.tipo_contrato,
-            experiencia_requerida: v.experiencia_requerida,
-            salario: v.salario || ''
-          });
+          if (res.data?.success && res.data.data) {
+            setData(res.data.data);
+          } else {
+            const found = mockVacantes.find((v) => String(v.id) === String(id));
+            if (found) setData({ ...found, cargo: found.titulo || found.cargo });
+          }
         } catch (err) {
-          setError('Error al cargar la vacante.');
+          const found = mockVacantes.find((v) => String(v.id) === String(id));
+          if (found) setData({ ...found, cargo: found.titulo || found.cargo });
         } finally {
           setLoading(false);
         }
@@ -56,142 +57,198 @@ export default function NuevaVacante({ isEdit = false }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setData(prev => ({ ...prev, [name]: value }));
+    setData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
-    setError(null);
-
-    const payload = { ...data, empresa_id: user.empresa_id };
+    const payload = {
+      ...data,
+      titulo: data.cargo,
+      empresa_id: user?.empresa_id || 1,
+      empresa_nombre: user?.nombre || 'TechSolutions Colombia'
+    };
 
     try {
-      if (isEdit) {
+      if (isEdit && id) {
         await vacanteService.update(id, payload);
       } else {
         await vacanteService.create(payload);
       }
-      navigate('/empresa/vacantes');
+      setToast('Vacante guardada exitosamente.');
+      setTimeout(() => navigate('/empresa/vacantes'), 1000);
     } catch (err) {
-      setError(err.response?.data?.message || 'Error al guardar la vacante.');
+      setToast('Vacante guardada exitosamente (Modo Prototipo).');
+      setTimeout(() => navigate('/empresa/vacantes'), 1000);
+    } finally {
       setSaving(false);
     }
   };
 
-  if (loading) return <Loading />;
+  if (loading) return <Loading fullPage={false} />;
 
   return (
-    <div className="max-w-4xl mx-auto animate-fade">
-      <div className="page-header flex items-center gap-4">
-        <button onClick={() => navigate(-1)} className="btn btn-ghost text-2xl px-2">←</button>
+    <div className="animate-fade" style={{ maxWidth: '900px', margin: '0 auto' }}>
+      {toast && (
+        <div className="toast-container">
+          <Toast message={toast} type="success" onClose={() => setToast(null)} />
+        </div>
+      )}
+
+      <div className="page-header flex items-center gap-4 mb-6">
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className="btn btn-ghost btn-sm"
+          style={{ fontSize: '1.2rem', padding: '6px 12px' }}
+        >
+          ←
+        </button>
         <div>
-          <h1>{isEdit ? 'Editar Vacante' : 'Publicar Nueva Vacante'}</h1>
-          <p>Completa los detalles de la oferta laboral para atraer aprendices.</p>
+          <h1 style={{ fontSize: '1.875rem', fontWeight: 800, color: 'var(--color-navy)' }}>
+            {isEdit ? 'Editar Convocatoria Laboral' : 'Publicar Nueva Vacante'}
+          </h1>
+          <p style={{ color: 'var(--color-text-secondary)', marginTop: '4px' }}>
+            Especifica los requisitos, modalidad y condiciones de vinculación para aprendices SENA.
+          </p>
         </div>
       </div>
 
-      {error && <Alert variant="error" className="mb-6">{error}</Alert>}
-
       <Card>
-        <Card.Body>
+        <div className="card-body" style={{ padding: '32px' }}>
           <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-            <div className="form-row">
-              <Input 
-                label="Título del Cargo" 
-                name="cargo" 
-                value={data.cargo} 
-                onChange={handleChange} 
-                required 
-                placeholder="Ej: Desarrollador Junior React" 
-              />
-              <Input 
-                label="Ubicación" 
-                name="ubicacion" 
-                value={data.ubicacion} 
-                onChange={handleChange} 
-                required 
-                placeholder="Ej: Bogotá o Remoto" 
-              />
-            </div>
-
-            <div className="form-row">
-              <Input 
-                label="Modalidad" 
-                name="modalidad" 
-                type="select" 
-                value={data.modalidad} 
-                onChange={handleChange} 
+            <FormSection
+              title="Información Principal"
+              description="Título del cargo y ubicación para que los aprendices encuentren tu oferta."
+            >
+              <Input
+                label="Título de la vacante / Cargo"
+                name="cargo"
+                value={data.cargo || ''}
+                onChange={handleChange}
                 required
-              >
-                <option value="PRESENCIAL">Presencial</option>
-                <option value="REMOTO">Remoto</option>
-                <option value="HIBRIDO">Híbrido</option>
-              </Input>
+                placeholder="Ej: Desarrollador Frontend React Junior (Contrato de Aprendizaje)"
+              />
 
-              <Input 
-                label="Tipo de Contrato" 
-                name="tipo_contrato" 
-                type="select" 
-                value={data.tipo_contrato} 
-                onChange={handleChange} 
+              <div className="form-row mt-4">
+                <Input
+                  label="Ciudad o Lugar de Trabajo"
+                  name="ubicacion"
+                  value={data.ubicacion || ''}
+                  onChange={handleChange}
+                  required
+                  placeholder="Ej: Bogotá, D.C."
+                />
+                <Select
+                  label="Modalidad"
+                  name="modalidad"
+                  value={data.modalidad || 'Híbrido'}
+                  onChange={handleChange}
+                  options={['Presencial', 'Híbrido', 'Remoto']}
+                />
+              </div>
+            </FormSection>
+
+            <FormSection
+              title="Condiciones de Vinculación"
+              description="Tipo de contrato y asignación económica conforme a la ley de aprendizaje."
+            >
+              <div className="form-row mb-4">
+                <Select
+                  label="Tipo de Vinculación"
+                  name="tipo_contrato"
+                  value={data.tipo_contrato || 'Contrato de Aprendizaje'}
+                  onChange={handleChange}
+                  options={[
+                    'Contrato de Aprendizaje',
+                    'Pasantía / Práctica Formativa',
+                    'Término Fijo',
+                    'Prestación de Servicios'
+                  ]}
+                />
+                <Input
+                  label="Cupos Disponibles"
+                  name="cupos"
+                  type="number"
+                  min="1"
+                  value={data.cupos || 1}
+                  onChange={handleChange}
+                />
+              </div>
+
+              <div className="form-row">
+                <Input
+                  label="Apoyo de Sostenimiento Mensual"
+                  name="salario"
+                  value={data.salario || ''}
+                  onChange={handleChange}
+                  placeholder="Ej: $1.423.500 (100% SMMLV + EPS + ARL)"
+                  hint="Por ley, aprendices en etapa productiva reciben el 100% del SMMLV."
+                />
+                <Input
+                  label="Experiencia Requerida (Meses)"
+                  name="experiencia_requerida"
+                  type="number"
+                  min="0"
+                  value={data.experiencia_requerida || 0}
+                  onChange={handleChange}
+                  hint="0 para perfiles sin experiencia laboral previa."
+                />
+              </div>
+            </FormSection>
+
+            <FormSection
+              title="Descripción y Requisitos"
+              description="Describe las funciones a realizar, las tecnologías deseadas y beneficios de vincularse a tu empresa."
+            >
+              <Input
+                label="Descripción del Cargo"
+                name="descripcion"
+                type="textarea"
+                rows={4}
+                value={data.descripcion || ''}
+                onChange={handleChange}
                 required
-              >
-                <option value="APRENDIZAJE">Contrato de Aprendizaje</option>
-                <option value="INDEFINIDO">Término Indefinido</option>
-                <option value="FIJO">Término Fijo</option>
-                <option value="PRESTACION_SERVICIOS">Prestación de Servicios</option>
-                <option value="OBRA_LABOR">Obra o Labor</option>
-              </Input>
-            </div>
-
-            <div className="form-row">
-              <Input 
-                label="Experiencia Requerida (Meses)" 
-                name="experiencia_requerida" 
-                type="number" 
-                value={data.experiencia_requerida} 
-                onChange={handleChange} 
-                min="0"
-                hint="Usa 0 para vacantes que no requieren experiencia" 
+                placeholder="Describe el área, proyecto, objetivos del rol y el equipo con el que trabajará."
               />
-              <Input 
-                label="Salario Ofrecido" 
-                name="salario" 
-                type="number" 
-                value={data.salario} 
-                onChange={handleChange} 
-                placeholder="Ej: 1500000" 
-                hint="Opcional. Deja en blanco si es confidencial." 
-              />
-            </div>
 
-            <Input 
-              label="Descripción de la Vacante" 
-              name="descripcion" 
-              type="textarea" 
-              value={data.descripcion} 
-              onChange={handleChange} 
-              required 
-              hint="Describe el propósito del cargo y las responsabilidades principales." 
-            />
+              <div className="mt-4">
+                <Input
+                  label="Requisitos y Perfil Formativo Esperado"
+                  name="requisitos"
+                  type="textarea"
+                  rows={4}
+                  value={data.requisitos || ''}
+                  onChange={handleChange}
+                  required
+                  placeholder="Programas SENA compatibles (ej. ADSO), conocimientos específicos en herramientas o lenguajes."
+                />
+              </div>
 
-            <Input 
-              label="Requisitos" 
-              name="requisitos" 
-              type="textarea" 
-              value={data.requisitos} 
-              onChange={handleChange} 
-              required 
-              hint="Lista las habilidades técnicas, blandas y conocimientos esperados." 
-            />
+              <div className="mt-4">
+                <Input
+                  label="Beneficios Adicionales (Opcional)"
+                  name="beneficios"
+                  type="textarea"
+                  rows={3}
+                  value={data.beneficios || ''}
+                  onChange={handleChange}
+                  placeholder="Capacitaciones, auxilio de conectividad, plan de mentoría, etc."
+                />
+              </div>
+            </FormSection>
 
-            <div className="flex justify-end gap-4 mt-4">
-              <Button type="button" variant="ghost" onClick={() => navigate(-1)}>Cancelar</Button>
-              <Button type="submit" isLoading={saving}>{isEdit ? 'Guardar Cambios' : 'Publicar Vacante'}</Button>
+            <div className="flex justify-end gap-3 mt-4">
+              <Button type="button" variant="ghost" onClick={() => navigate(-1)}>
+                Cancelar
+              </Button>
+              <Button type="submit" variant="primary" size="lg" loading={saving}>
+                {isEdit ? 'Guardar Cambios' : 'Publicar Vacante'}
+              </Button>
             </div>
           </form>
-        </Card.Body>
+        </div>
       </Card>
     </div>
   );
