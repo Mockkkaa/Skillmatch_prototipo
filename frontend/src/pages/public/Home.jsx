@@ -1,156 +1,250 @@
-import { Link } from 'react-router-dom';
-import {
-  IconBriefcase,
-  IconResume,
-  IconGraduation,
-  IconBuilding,
-  IconUsers,
-  IconPostulacion
-} from '../../components/common/Icons';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { IconBriefcase } from '../../components/common/Icons';
+import { vacanteService } from '../../services';
+import { mockVacantes } from '../../data/mockData';
+import '../../styles/home.css';
+
+// Programas de formación SENA destacados
+const PROGRAMAS_SENA = [
+  { id: 1, nombre: 'Análisis y Desarrollo de Software (ADSO)', icono: '💻', area: 'Tecnología', vacantes: '+50' },
+  { id: 2, nombre: 'Gestión Empresarial y Administrativa', icono: '📊', area: 'Administración', vacantes: '+35' },
+  { id: 3, nombre: 'Redes y Telecomunicaciones', icono: '🌐', area: 'Infraestructura', vacantes: '+25' },
+  { id: 4, nombre: 'Diseño Gráfico & Multimedia', icono: '🎨', area: 'Diseño', vacantes: '+20' },
+  { id: 5, nombre: 'Contabilidad y Finanzas', icono: '📈', area: 'Finanzas', vacantes: '+18' },
+  { id: 6, nombre: 'Marketing Digital y Comercio', icono: '🚀', area: 'Comercio', vacantes: '+15' }
+];
+
+// Preguntas frecuentes
+const FAQS = [
+  {
+    pregunta: '¿Tiene algún costo registrarse o postularse en SKILLMATCH?',
+    respuesta: 'No. SKILLMATCH es una plataforma oficial y completamente gratuita tanto para aprendices del SENA como para las empresas aliadas.'
+  },
+  {
+    pregunta: '¿Cómo se valida mi condición de aprendiz SENA?',
+    respuesta: 'Durante el registro validas tu correo institucional (@soy.sena.edu.co o @misena.edu.co) y número de ficha. El sistema verifica tu programa y estado de formación (lectiva o productiva).'
+  },
+  {
+    pregunta: '¿Qué tipo de vinculación laboral ofrecen las empresas?',
+    respuesta: 'Principalmente contratos de aprendizaje para etapa productiva con remuneración de sostenimiento oficial, así como vacantes de empleo formal para egresados SENA.'
+  },
+  {
+    pregunta: '¿Cómo calcula la plataforma el porcentaje de compatibilidad (Match)?',
+    respuesta: 'Comparamos las habilidades técnicas, blandas y programas de formación requeridos por la vacante con los registrados en la hoja de vida del aprendiz.'
+  }
+];
 
 export default function Home() {
+  const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [vacantesDestacadas, setVacantesDestacadas] = useState([]);
+  const [openFaq, setOpenFaq] = useState(null);
+
+  useEffect(() => {
+    async function loadVacantes() {
+      try {
+        const res = await vacanteService.list();
+        if (res.data?.success && Array.isArray(res.data.data) && res.data.data.length > 0) {
+          setVacantesDestacadas(res.data.data.slice(0, 3));
+        } else {
+          setVacantesDestacadas(mockVacantes.slice(0, 3));
+        }
+      } catch (err) {
+        setVacantesDestacadas(mockVacantes.slice(0, 3));
+      }
+    }
+    loadVacantes();
+  }, []);
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/ofertas?query=${encodeURIComponent(searchQuery.trim())}`);
+    } else {
+      navigate('/ofertas');
+    }
+  };
+
+  const toggleFaq = (index) => {
+    setOpenFaq(openFaq === index ? null : index);
+  };
+
   return (
     <div className="home-page animate-fade">
-      {/* Hero Section */}
-      <section
-        style={{
-          background: 'linear-gradient(180deg, #FFFFFF 0%, #F7F9FB 100%)',
-          padding: '80px 0 60px',
-          borderBottom: '1px solid var(--color-border)'
-        }}
-      >
+      {/* 1. SECCIÓN HERO */}
+      <section className="home-hero-section">
         <div className="container text-center">
-          <div
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '6px 16px',
-              background: 'var(--color-primary-light)',
-              color: 'var(--color-primary-dark)',
-              borderRadius: 'var(--radius-full)',
-              fontSize: 'var(--font-size-xs)',
-              fontWeight: 700,
-              letterSpacing: '0.05em',
-              textTransform: 'uppercase',
-              marginBottom: '24px'
-            }}
-          >
-            Plataforma de Empleabilidad SENA
+          <div className="home-hero-badge">
+            <span style={{ fontSize: '1.1rem' }}>🇨🇴</span> Plataforma Oficial de Empleabilidad SENA
           </div>
 
-          <h1
-            style={{
-              fontSize: 'clamp(2rem, 5vw, 3.25rem)',
-              fontWeight: 800,
-              lineHeight: 1.15,
-              color: 'var(--color-navy)',
-              maxWidth: '850px',
-              margin: '0 auto 20px'
-            }}
-          >
-            Conecta tu talento con <span style={{ color: 'var(--color-primary)' }}>nuevas oportunidades</span>
+          <h1 className="home-hero-title">
+            Conecta tu talento con <span className="home-hero-highlight">oportunidades reales</span>
           </h1>
 
-          <p
-            style={{
-              fontSize: '1.125rem',
-              color: 'var(--color-text-secondary)',
-              maxWidth: '680px',
-              margin: '0 auto 36px',
-              lineHeight: 1.6
-            }}
-          >
-            SKILLMATCH facilita la gestión de la información profesional del aprendiz SENA,
-            organiza su hoja de vida por competencias y conecta sus perfiles directamente con
-            empresas aliadas en busca de talento calificado.
+          <p className="home-hero-description">
+            Organiza tu hoja de vida por competencias, postula a convocatorias verificadas de
+            empresas aliadas y haz el seguimiento de tu etapa productiva con un solo clic.
           </p>
 
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'center',
-              gap: '16px',
-              flexWrap: 'wrap',
-              marginBottom: '48px'
-            }}
-          >
-            <Link to="/ofertas" className="btn btn-primary btn-xl">
-              <IconBriefcase size={20} />
-              <span>Explorar ofertas laborales</span>
+          {/* Buscador Interactivo en el Hero */}
+          <form className="home-search-bar" onSubmit={handleSearch}>
+            <span style={{ color: 'var(--color-primary)', fontSize: '1.2rem', marginLeft: '4px' }}>🔍</span>
+            <input
+              type="text"
+              className="home-search-input"
+              placeholder="Busca por cargo, habilidad (ej. React, Contabilidad) o ciudad..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            <button type="submit" className="btn btn-primary btn-md">
+              Buscar vacantes
+            </button>
+          </form>
+
+          {/* Acciones Rápidas */}
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', flexWrap: 'wrap', marginBottom: '44px' }}>
+            <Link to="/ofertas" className="btn btn-secondary btn-lg">
+              <IconBriefcase size={18} />
+              <span>Ver todas las ofertas</span>
             </Link>
-            <Link to="/register" className="btn btn-ghost btn-xl">
-              <span>Crear mi perfil de aprendiz</span>
+            <Link to="/register" className="btn btn-primary btn-lg">
+              <span>Registrar mi perfil de aprendiz</span>
             </Link>
           </div>
 
-          {/* Key Metrics / Credibility bar */}
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-              gap: '24px',
-              maxWidth: '960px',
-              margin: '0 auto',
-              padding: '24px 32px',
-              background: 'var(--color-white)',
-              borderRadius: 'var(--radius-xl)',
-              boxShadow: 'var(--shadow-md)',
-              border: '1px solid var(--color-border)'
-            }}
-          >
+          {/* Métricas / Barra de Credibilidad */}
+          <div className="home-metrics-bar">
             <div>
-              <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--color-navy)' }}>
-                +1.400
-              </div>
-              <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>
-                Aprendices Registrados
-              </div>
+              <div className="home-metric-val">+1.400</div>
+              <div className="home-metric-label">Aprendices Registrados</div>
             </div>
             <div>
-              <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--color-primary)' }}>
-                +180
-              </div>
-              <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>
-                Empresas Verificadas
-              </div>
+              <div className="home-metric-val home-metric-val-primary">+180</div>
+              <div className="home-metric-label">Empresas Verificadas</div>
             </div>
             <div>
-              <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--color-navy)' }}>
-                64
-              </div>
-              <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>
-                Vacantes Activas
-              </div>
+              <div className="home-metric-val">64</div>
+              <div className="home-metric-label">Vacantes Activas</div>
             </div>
             <div>
-              <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--color-primary)' }}>
-                100%
-              </div>
-              <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>
-                Gratuito y Oficial
-              </div>
+              <div className="home-metric-val home-metric-val-primary">100%</div>
+              <div className="home-metric-label">Gratuito y Oficial</div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Cómo Funciona Section */}
-      <section id="como-funciona" style={{ padding: '80px 0', background: 'var(--color-white)' }}>
+      {/* 2. SECCIÓN OFERTAS DESTACADAS */}
+      <section id="ofertas-destacadas" className="home-featured-section">
         <div className="container">
-          <div className="text-center" style={{ marginBottom: '56px' }}>
-            <span
-              style={{
-                color: 'var(--color-primary)',
-                fontWeight: 700,
-                fontSize: '0.875rem',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em'
-              }}
-            >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '16px' }}>
+            <div>
+              <span style={{ color: 'var(--color-primary)', fontWeight: 700, fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Convocatorias Recientes
+              </span>
+              <h2 style={{ fontSize: '2rem', color: 'var(--color-navy)', marginTop: '6px' }}>
+                Ofertas laborales destacadas
+              </h2>
+            </div>
+            <Link to="/ofertas" className="btn btn-ghost btn-sm">
+              Ver todas las convocatorias →
+            </Link>
+          </div>
+
+          <div className="home-featured-grid">
+            {vacantesDestacadas.map((vacante, idx) => {
+              // Simular o calcular compatibilidad match para la demo
+              const matchPercent = [95, 88, 92][idx] || 85;
+              return (
+                <div key={vacante.id} className="home-vacante-card">
+                  <div>
+                    <div className="home-vacante-header">
+                      <div>
+                        <h3 className="home-vacante-title">{vacante.titulo || vacante.cargo}</h3>
+                        <div className="home-vacante-empresa">
+                          🏢 {vacante.empresa_nombre || vacante.empresa || 'Empresa Aliada'}
+                        </div>
+                      </div>
+                      <div className="home-vacante-match">
+                        ⚡ {matchPercent}% Match
+                      </div>
+                    </div>
+
+                    <div className="home-vacante-badges">
+                      <span className="home-vacante-tag home-vacante-tag-primary">
+                        📍 {vacante.ubicacion || 'Colombia'}
+                      </span>
+                      <span className="home-vacante-tag">
+                        💼 {vacante.modalidad || 'Híbrido'}
+                      </span>
+                      <span className="home-vacante-tag">
+                        📄 {vacante.tipo_contrato || 'Contrato de Aprendizaje'}
+                      </span>
+                    </div>
+
+                    <p style={{ fontSize: '0.88rem', color: 'var(--color-text-secondary)', lineHeight: 1.5, margin: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                      {vacante.descripcion}
+                    </p>
+                  </div>
+
+                  <div className="home-vacante-footer">
+                    <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
+                      Publicada recientemente
+                    </span>
+                    <Link to={`/ofertas/${vacante.id}`} className="btn btn-primary btn-sm">
+                      Ver detalle
+                    </Link>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* 3. SECCIÓN PROGRAMAS / ÁREAS DE FORMACIÓN */}
+      <section id="programas" className="home-programs-section">
+        <div className="container">
+          <div className="text-center">
+            <span style={{ color: 'var(--color-primary)', fontWeight: 700, fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Especialidades
+            </span>
+            <h2 style={{ fontSize: '2.2rem', color: 'var(--color-navy)', marginTop: '8px' }}>
+              Explora por programa de formación SENA
+            </h2>
+            <p style={{ color: 'var(--color-text-secondary)', maxWidth: '600px', margin: '10px auto 0' }}>
+              Encuentra vacantes alineadas directamente a las competencias de tu ficha y programa técnico o tecnológico.
+            </p>
+          </div>
+
+          <div className="home-programs-grid">
+            {PROGRAMAS_SENA.map((prog) => (
+              <Link
+                key={prog.id}
+                to={`/ofertas?query=${encodeURIComponent(prog.area)}`}
+                className="home-program-card"
+              >
+                <div className="home-program-icon">{prog.icono}</div>
+                <div className="home-program-info">
+                  <h4>{prog.nombre}</h4>
+                  <span>{prog.vacantes} vacantes activas</span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 4. SECCIÓN CÓMO FUNCIONA */}
+      <section id="como-funciona" className="home-steps-section">
+        <div className="container">
+          <div className="text-center">
+            <span style={{ color: 'var(--color-primary)', fontWeight: 700, fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               Paso a paso
             </span>
-            <h2 style={{ fontSize: '2.25rem', color: 'var(--color-navy)', marginTop: '8px' }}>
+            <h2 style={{ fontSize: '2.2rem', color: 'var(--color-navy)', marginTop: '8px' }}>
               ¿Cómo funciona SKILLMATCH?
             </h2>
             <p style={{ color: 'var(--color-text-secondary)', maxWidth: '600px', margin: '12px auto 0' }}>
@@ -158,32 +252,9 @@ export default function Home() {
             </p>
           </div>
 
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-              gap: '24px'
-            }}
-          >
-            {/* Step 1 */}
-            <div className="card" style={{ padding: '32px 24px', textAlign: 'left' }}>
-              <div
-                style={{
-                  width: '48px',
-                  height: '48px',
-                  borderRadius: '12px',
-                  background: 'var(--color-primary-light)',
-                  color: 'var(--color-primary)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: 800,
-                  fontSize: '1.25rem',
-                  marginBottom: '20px'
-                }}
-              >
-                1
-              </div>
+          <div className="home-steps-grid">
+            <div className="home-step-card">
+              <div className="home-step-num">1</div>
               <h3 style={{ fontSize: '1.15rem', marginBottom: '10px', color: 'var(--color-navy)' }}>
                 Crea tu perfil laboral
               </h3>
@@ -192,107 +263,43 @@ export default function Home() {
               </p>
             </div>
 
-            {/* Step 2 */}
-            <div className="card" style={{ padding: '32px 24px', textAlign: 'left' }}>
-              <div
-                style={{
-                  width: '48px',
-                  height: '48px',
-                  borderRadius: '12px',
-                  background: 'var(--color-primary-light)',
-                  color: 'var(--color-primary)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: 800,
-                  fontSize: '1.25rem',
-                  marginBottom: '20px'
-                }}
-              >
-                2
-              </div>
+            <div className="home-step-card">
+              <div className="home-step-num">2</div>
               <h3 style={{ fontSize: '1.15rem', marginBottom: '10px', color: 'var(--color-navy)' }}>
                 Completa tu hoja de vida
               </h3>
               <p style={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)', lineHeight: 1.5 }}>
-                Agrega tu formación académica, proyectos formativos, habilidades técnicas y blandas.
+                Agrega proyectos formativos, competencias técnicas y blandas para potenciar tu porcentaje de Match.
               </p>
             </div>
 
-            {/* Step 3 */}
-            <div className="card" style={{ padding: '32px 24px', textAlign: 'left' }}>
-              <div
-                style={{
-                  width: '48px',
-                  height: '48px',
-                  borderRadius: '12px',
-                  background: 'var(--color-primary-light)',
-                  color: 'var(--color-primary)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: 800,
-                  fontSize: '1.25rem',
-                  marginBottom: '20px'
-                }}
-              >
-                3
-              </div>
+            <div className="home-step-card">
+              <div className="home-step-num">3</div>
               <h3 style={{ fontSize: '1.15rem', marginBottom: '10px', color: 'var(--color-navy)' }}>
                 Encuentra oportunidades
               </h3>
               <p style={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)', lineHeight: 1.5 }}>
-                Filtra por modalidad, tipo de contrato y ubicación geográfica según tus preferencias.
+                Filtra por modalidad, tipo de contrato y ciudad según tus preferencias laborales.
               </p>
             </div>
 
-            {/* Step 4 */}
-            <div className="card" style={{ padding: '32px 24px', textAlign: 'left' }}>
-              <div
-                style={{
-                  width: '48px',
-                  height: '48px',
-                  borderRadius: '12px',
-                  background: 'var(--color-primary-light)',
-                  color: 'var(--color-primary)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: 800,
-                  fontSize: '1.25rem',
-                  marginBottom: '20px'
-                }}
-              >
-                4
-              </div>
+            <div className="home-step-card">
+              <div className="home-step-num">4</div>
               <h3 style={{ fontSize: '1.15rem', marginBottom: '10px', color: 'var(--color-navy)' }}>
                 Postúlate y da seguimiento
               </h3>
               <p style={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)', lineHeight: 1.5 }}>
-                Aplica con un solo clic y monitorea el estado de tu proceso en tiempo real.
+                Aplica con un solo clic y monitorea en tiempo real las respuestas de las empresas interesadas.
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Empresas Banner Section */}
-      <section id="para-empresas" style={{ padding: '60px 0 90px' }}>
+      {/* 5. BANNER PARA EMPRESAS */}
+      <section id="para-empresas" className="home-empresa-section">
         <div className="container">
-          <div
-            style={{
-              background: 'linear-gradient(135deg, #0B132B 0%, #1C2541 100%)',
-              borderRadius: 'var(--radius-2xl)',
-              padding: 'clamp(32px, 6vw, 64px)',
-              color: '#FFFFFF',
-              boxShadow: 'var(--shadow-xl)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '40px',
-              flexWrap: 'wrap'
-            }}
-          >
+          <div className="home-empresa-banner">
             <div style={{ maxWidth: '600px' }}>
               <span
                 style={{
@@ -312,7 +319,7 @@ export default function Home() {
                 style={{
                   fontSize: 'clamp(1.75rem, 3.5vw, 2.5rem)',
                   color: '#FFFFFF',
-                  margin: '16px 0 16px',
+                  margin: '16px 0',
                   fontWeight: 800
                 }}
               >
@@ -340,22 +347,20 @@ export default function Home() {
                   marginBottom: '28px'
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ color: 'var(--color-secondary)' }}>✓</span> Contratos de aprendizaje
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ color: 'var(--color-secondary)' }}>✓</span> Validación institucional
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ color: 'var(--color-secondary)' }}>✓</span> Panel de seguimiento
-                </div>
+                <div>✓ Contratos de aprendizaje</div>
+                <div>✓ Validación institucional</div>
+                <div>✓ Panel de seguimiento</div>
               </div>
 
               <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
                 <Link to="/register-empresa" className="btn btn-primary btn-lg">
                   Registrar mi empresa
                 </Link>
-                <Link to="/login" className="btn btn-ghost btn-lg" style={{ color: '#FFFFFF', borderColor: 'rgba(255, 255, 255, 0.3)' }}>
+                <Link
+                  to="/login"
+                  className="btn btn-ghost btn-lg"
+                  style={{ color: '#FFFFFF', borderColor: 'rgba(255, 255, 255, 0.3)' }}
+                >
                   Ingreso para empresas
                 </Link>
               </div>
@@ -372,27 +377,63 @@ export default function Home() {
               }}
             >
               <h4 style={{ color: '#FFFFFF', marginBottom: '16px', fontSize: '1.1rem' }}>
-                Programas con mayor demanda:
+                Beneficios clave para empresas:
               </h4>
-              <ul style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <li style={{ display: 'flex', justifyContent: 'space-between', color: 'rgba(255, 255, 255, 0.85)', fontSize: '0.9rem' }}>
-                  <span>Análisis y Desarrollo de Software (ADSO)</span>
-                  <strong style={{ color: 'var(--color-secondary)' }}>+50 vacantes</strong>
+              <ul style={{ display: 'flex', flexDirection: 'column', gap: '14px', listStyle: 'none', padding: 0, margin: 0 }}>
+                <li style={{ display: 'flex', gap: '10px', color: 'rgba(255, 255, 255, 0.85)', fontSize: '0.9rem' }}>
+                  <span style={{ color: 'var(--color-secondary)', fontWeight: 700 }}>✓</span>
+                  Cumplimiento de cuota de aprendices según normatividad legal colombiana.
                 </li>
-                <li style={{ display: 'flex', justifyContent: 'space-between', color: 'rgba(255, 255, 255, 0.85)', fontSize: '0.9rem' }}>
-                  <span>Gestión Administrativa y Documental</span>
-                  <strong style={{ color: 'var(--color-secondary)' }}>+35 vacantes</strong>
+                <li style={{ display: 'flex', gap: '10px', color: 'rgba(255, 255, 255, 0.85)', fontSize: '0.9rem' }}>
+                  <span style={{ color: 'var(--color-secondary)', fontWeight: 700 }}>✓</span>
+                  Filtro directo por nivel formativo (Técnico / Tecnólogo).
                 </li>
-                <li style={{ display: 'flex', justifyContent: 'space-between', color: 'rgba(255, 255, 255, 0.85)', fontSize: '0.9rem' }}>
-                  <span>Redes, Soporte y Telecomunicaciones</span>
-                  <strong style={{ color: 'var(--color-secondary)' }}>+25 vacantes</strong>
-                </li>
-                <li style={{ display: 'flex', justifyContent: 'space-between', color: 'rgba(255, 255, 255, 0.85)', fontSize: '0.9rem' }}>
-                  <span>Contabilidad y Finanzas</span>
-                  <strong style={{ color: 'var(--color-secondary)' }}>+20 vacantes</strong>
+                <li style={{ display: 'flex', gap: '10px', color: 'rgba(255, 255, 255, 0.85)', fontSize: '0.9rem' }}>
+                  <span style={{ color: 'var(--color-secondary)', fontWeight: 700 }}>✓</span>
+                  Acceso a proyectos formativos reales desarrollados en el SENA.
                 </li>
               </ul>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 6. SECCIÓN PREGUNTAS FRECUENTES (FAQS) */}
+      <section id="faq" className="home-faq-section">
+        <div className="container">
+          <div className="text-center">
+            <span style={{ color: 'var(--color-primary)', fontWeight: 700, fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Resuelve tus dudas
+            </span>
+            <h2 style={{ fontSize: '2.2rem', color: 'var(--color-navy)', marginTop: '8px' }}>
+              Preguntas Frecuentes
+            </h2>
+            <p style={{ color: 'var(--color-text-secondary)', maxWidth: '600px', margin: '10px auto 0' }}>
+              Todo lo que necesitas saber sobre el uso de la plataforma SKILLMATCH y los contratos de aprendizaje.
+            </p>
+          </div>
+
+          <div className="home-faq-container">
+            {FAQS.map((faq, index) => {
+              const isOpen = openFaq === index;
+              return (
+                <div key={index} className="home-faq-item">
+                  <button
+                    className="home-faq-question"
+                    onClick={() => toggleFaq(index)}
+                    type="button"
+                  >
+                    <span>{faq.pregunta}</span>
+                    <span className={`home-faq-icon ${isOpen ? 'open' : ''}`}>+</span>
+                  </button>
+                  {isOpen && (
+                    <div className="home-faq-answer">
+                      {faq.respuesta}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>

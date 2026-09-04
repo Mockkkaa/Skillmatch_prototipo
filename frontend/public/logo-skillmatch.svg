@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <!-- S shape superior en verde primario / esmeralda -->
+  <path 
+    d="M75 30H38C30 30 24 36 24 44C24 52 30 58 38 58H58" 
+    stroke="#00B050" 
+    stroke-width="14" 
+    stroke-linecap="round" 
+    stroke-linejoin="round"
+  />
+  <!-- S shape inferior -->
+  <path 
+    d="M42 58H62C70 58 76 64 76 72C76 80 70 86 62 86H25" 
+    stroke="#00B050" 
+    stroke-width="14" 
+    stroke-linecap="round" 
+    stroke-linejoin="round"
+  />
+</svg>

@@ -1,28 +1,32 @@
-export function BrandLogo({ size = 28, textClass = '' }) {
+export function BrandLogo({ size = 32, textClass = '' }) {
   return (
     <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px' }}>
-      <div
-        style={{
-          width: size,
-          height: size,
-          borderRadius: '8px',
-          background: 'linear-gradient(135deg, #2E8B57 0%, #0B132B 100%)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          boxShadow: '0 2px 8px rgba(46, 139, 87, 0.3)',
-          flexShrink: 0
-        }}
+      <svg
+        width={size}
+        height={size}
+        viewBox="0 0 100 100"
+        fill="none"
+        style={{ flexShrink: 0 }}
       >
-        <svg width={size * 0.6} height={size * 0.6} viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <polyline points="16 18 22 12 16 6"></polyline>
-          <polyline points="8 6 2 12 8 18"></polyline>
-        </svg>
-      </div>
+        <path
+          d="M75 28H38C29 28 22 35 22 44C22 53 29 60 38 60H58"
+          stroke="var(--color-primary, #00B050)"
+          strokeWidth="14"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M42 60H62C71 60 78 67 78 76C78 85 71 92 62 92H25"
+          stroke="var(--color-primary, #00B050)"
+          strokeWidth="14"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
       <span
         className={textClass}
         style={{
-          fontSize: '1.2rem',
+          fontSize: '1.28rem',
           fontWeight: 800,
           letterSpacing: '-0.5px',
           color: 'inherit'

@@ -69,9 +69,31 @@ export default function ReportesAdmin() {
             Generación de reportes estadísticos para seguimiento de metas APE y colocación laboral SENA.
           </p>
         </div>
-        <Button variant="ghost" onClick={() => window.print()}>
-          🖨️ Exportar Informe PDF
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="ghost"
+            onClick={() => {
+              const csvRows = [
+                ['Programa SENA', 'Total Postulados', 'Tasa Colocacion Estimada'],
+                ...programas.map((p) => [p.programa, p.total, '82%'])
+              ];
+              const csvContent = 'data:text/csv;charset=utf-8,' + csvRows.map((e) => e.join(',')).join('\n');
+              const encodedUri = encodeURI(csvContent);
+              const link = document.createElement('a');
+              link.setAttribute('href', encodedUri);
+              link.setAttribute('download', `reporte_empleabilidad_${new Date().toISOString().slice(0, 10)}.csv`);
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+              setToast('Reporte descargado en formato CSV compatible con Excel.');
+            }}
+          >
+            📊 Exportar a Excel (CSV)
+          </Button>
+          <Button variant="ghost" onClick={() => window.print()}>
+            🖨️ Exportar Informe PDF
+          </Button>
+        </div>
       </div>
 
       {/* Filter and Report Generator Bar */}

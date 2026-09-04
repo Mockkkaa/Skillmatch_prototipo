@@ -7,13 +7,22 @@ import EmptyState from '../../components/common/EmptyState';
 import Loading from '../../components/common/Loading';
 import Avatar from '../../components/common/Avatar';
 import Toast from '../../components/common/Toast';
+import Button from '../../components/common/Button';
 import { mockPostulaciones } from '../../data/mockData';
+
+const KANBAN_COLUMNS = [
+  { id: 'ENVIADA', titulo: 'Nuevos Postulados', color: 'var(--color-navy)' },
+  { id: 'EN_REVISION', titulo: 'En Revisión CV', color: '#F59E0B' },
+  { id: 'PRESELECCIONADO', titulo: 'Preseleccionados', color: '#8B5CF6' },
+  { id: 'FINALIZADO', titulo: 'Contratados / Vinculados', color: 'var(--color-primary)' }
+];
 
 export default function PostulacionesRecibidas() {
   const { user } = useAuth();
   const [postulaciones, setPostulaciones] = useState([]);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState(null);
+  const [vistaKanban, setVistaKanban] = useState(true);
 
   useEffect(() => {
     loadPostulaciones();
@@ -40,12 +49,12 @@ export default function PostulacionesRecibidas() {
       setPostulaciones((prev) =>
         prev.map((p) => (p.id === id ? { ...p, estado: nuevoEstado } : p))
       );
-      setToast(`Estado de postulación cambiado a ${nuevoEstado.replace('_', ' ')}.`);
+      setToast(`Candidato movido a: ${nuevoEstado.replace('_', ' ')}.`);
     } catch (error) {
       setPostulaciones((prev) =>
         prev.map((p) => (p.id === id ? { ...p, estado: nuevoEstado } : p))
       );
-      setToast(`Estado actualizado a ${nuevoEstado.replace('_', ' ')} (Modo Prototipo).`);
+      setToast(`Candidato actualizado a: ${nuevoEstado.replace('_', ' ')}.`);
     }
   };
 
@@ -70,13 +79,32 @@ export default function PostulacionesRecibidas() {
         </div>
       )}
 
-      <div className="page-header mb-6">
-        <h1 style={{ fontSize: '1.875rem', fontWeight: 800, color: 'var(--color-navy)' }}>
-          Candidatos y Postulaciones Recibidas
-        </h1>
-        <p style={{ color: 'var(--color-text-secondary)', marginTop: '4px' }}>
-          Evalúa las hojas de vida de los aprendices que han aplicado a tus convocatorias laborales.
-        </p>
+      <div className="page-header flex justify-between items-center flex-wrap gap-4 mb-6">
+        <div>
+          <h1 style={{ fontSize: '1.875rem', fontWeight: 800, color: 'var(--color-navy)' }}>
+            Selección y Proceso de Candidatos
+          </h1>
+          <p style={{ color: 'var(--color-text-secondary)', marginTop: '4px' }}>
+            Gestiona el proceso de selección de aprendices SENA postulados a tus vacantes.
+          </p>
+        </div>
+
+        <div className="flex gap-2">
+          <Button
+            variant={vistaKanban ? 'primary' : 'ghost'}
+            size="sm"
+            onClick={() => setVistaKanban(true)}
+          >
+            📋 Tablero Kanban
+          </Button>
+          <Button
+            variant={!vistaKanban ? 'primary' : 'ghost'}
+            size="sm"
+            onClick={() => setVistaKanban(false)}
+          >
+            📜 Lista detallada
+          </Button>
+        </div>
       </div>
 
       {postulaciones.length === 0 ? (
@@ -85,7 +113,116 @@ export default function PostulacionesRecibidas() {
           title="Sin postulaciones recibidas aún"
           description="Tus vacantes activas aparecerán en el catálogo de ofertas del SENA para recibir aspirantes."
         />
+      ) : vistaKanban ? (
+        /* VISTA KANBAN PIPELINE */
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gap: '18px',
+            alignItems: 'start'
+          }}
+        >
+          {KANBAN_COLUMNS.map((col) => {
+            const items = postulaciones.filter((p) => p.estado === col.id);
+            return (
+              <div
+                key={col.id}
+                style={{
+                  background: 'var(--color-surface-2)',
+                  borderRadius: 'var(--radius-lg)',
+                  padding: '16px',
+                  border: '1px solid var(--color-border)'
+                }}
+              >
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: '14px',
+                    paddingBottom: '10px',
+                    borderBottom: `2px solid ${col.color}`
+                  }}
+                >
+                  <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--color-navy)', margin: 0 }}>
+                    {col.titulo}
+                  </h3>
+                  <span
+                    style={{
+                      background: 'var(--color-white)',
+                      padding: '2px 8px',
+                      borderRadius: 'var(--radius-full)',
+                      fontSize: '0.75rem',
+                      fontWeight: 700,
+                      color: col.color
+                    }}
+                  >
+                    {items.length}
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', minHeight: '120px' }}>
+                  {items.length === 0 ? (
+                    <div style={{ textAlign: 'center', color: 'var(--color-text-muted)', fontSize: '0.8rem', padding: '24px 0' }}>
+                      Sin candidatos en esta fase
+                    </div>
+                  ) : (
+                    items.map((post) => {
+                      const nombre = post.aprendiz_nombre || `${post.aprendiz_nombre || ''} ${post.aprendiz_apellido || ''}`.trim() || 'Aprendiz SENA';
+                      const cargo = post.vacante_titulo || post.cargo || 'Desarrollador Junior';
+                      const email = post.aprendiz_correo || 'juan.perez@soy.sena.edu.co';
+
+                      return (
+                        <Card key={post.id} style={{ padding: '14px', border: '1px solid var(--color-border)' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                            <Avatar name={nombre} size="sm" />
+                            <div style={{ minWidth: 0 }}>
+                              <h4 style={{ fontSize: '0.9rem', fontWeight: 700, margin: 0, color: 'var(--color-navy)' }} className="truncate">
+                                {nombre}
+                              </h4>
+                              <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
+                                {cargo}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: '10px' }}>
+                            ✉️ {email}
+                          </div>
+
+                          {/* Selector rápido de fase */}
+                          <div style={{ display: 'flex', gap: '6px', marginTop: '6px' }}>
+                            <select
+                              value={post.estado}
+                              onChange={(e) => handleUpdateEstado(post.id, e.target.value)}
+                              style={{
+                                width: '100%',
+                                fontSize: '0.75rem',
+                                padding: '4px 6px',
+                                borderRadius: 'var(--radius-sm)',
+                                border: '1px solid var(--color-border)',
+                                background: 'var(--color-background)'
+                              }}
+                            >
+                              <option value="ENVIADA">Mover a: Nuevo</option>
+                              <option value="EN_REVISION">Mover a: En Revisión</option>
+                              <option value="PRESELECCIONADO">Mover a: Preseleccionado</option>
+                              <option value="FINALIZADO">Mover a: Vinculado</option>
+                              <option value="RECHAZADO">Mover a: Rechazado</option>
+                            </select>
+                          </div>
+                        </Card>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       ) : (
+        /* VISTA LISTA DETALLADA */
         <div className="flex flex-col gap-4">
           {postulaciones.map((post) => {
             const nombre = post.aprendiz_nombre || `${post.aprendiz_nombre || ''} ${post.aprendiz_apellido || ''}`.trim() || 'Aprendiz SENA';
@@ -124,22 +261,6 @@ export default function PostulacionesRecibidas() {
                         <span>✉️ {email}</span>
                         <span>📅 Postulación: {post.fecha_postulacion ? post.fecha_postulacion.slice(0, 10) : '2025-02-16'}</span>
                       </div>
-
-                      {post.mensaje && (
-                        <p
-                          style={{
-                            marginTop: '12px',
-                            padding: '10px 14px',
-                            background: 'var(--color-surface-2)',
-                            borderRadius: 'var(--radius-sm)',
-                            fontSize: '0.85rem',
-                            color: 'var(--color-text)',
-                            fontStyle: 'italic'
-                          }}
-                        >
-                          "{post.mensaje}"
-                        </p>
-                      )}
                     </div>
                   </div>
 

@@ -32,11 +32,17 @@ export default function PublicLayout({ children }) {
               <Link to="/ofertas" className={`nav-link ${location.pathname.startsWith('/ofertas') ? 'active' : ''}`}>
                 Ofertas Laborales
               </Link>
+              <a href="/#programas" className="nav-link">
+                Programas SENA
+              </a>
               <a href="/#como-funciona" className="nav-link">
                 Cómo Funciona
               </a>
               <a href="/#para-empresas" className="nav-link">
                 Para Empresas
+              </a>
+              <a href="/#faq" className="nav-link">
+                Preguntas Frecuentes
               </a>
 
               {/* Mobile Only Actions inside drawer */}

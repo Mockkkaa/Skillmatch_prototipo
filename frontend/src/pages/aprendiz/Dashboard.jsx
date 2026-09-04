@@ -205,36 +205,73 @@ export default function Dashboard() {
                 const empresa = post.empresa_nombre || post.empresa;
                 return (
                   <Card key={post.id} className="card-interactive">
-                    <div className="card-body p-4 flex gap-4 items-center justify-between">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div
-                          style={{
-                            width: '40px',
-                            height: '40px',
-                            borderRadius: '10px',
-                            background: 'var(--color-surface-2)',
-                            color: 'var(--color-primary)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontWeight: 700,
-                            flexShrink: 0
-                          }}
-                        >
-                          🏢
+                    <div className="card-body p-4">
+                      <div className="flex gap-4 items-center justify-between mb-3">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div
+                            style={{
+                              width: '40px',
+                              height: '40px',
+                              borderRadius: '10px',
+                              background: 'var(--color-surface-2)',
+                              color: 'var(--color-primary)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontWeight: 700,
+                              flexShrink: 0
+                            }}
+                          >
+                            🏢
+                          </div>
+                          <div className="min-w-0">
+                            <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--color-navy)' }} className="truncate">
+                              {cargo}
+                            </h4>
+                            <p style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)' }} className="truncate">
+                              {empresa} • {post.fecha_postulacion || 'Reciente'}
+                            </p>
+                          </div>
                         </div>
-                        <div className="min-w-0">
-                          <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--color-navy)' }} className="truncate">
-                            {cargo}
-                          </h4>
-                          <p style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)' }} className="truncate">
-                            {empresa} • {post.fecha_postulacion || 'Reciente'}
-                          </p>
+                        <Badge variant={getBadgeForEstado(post.estado)}>
+                          {String(post.estado || '').replace('_', ' ')}
+                        </Badge>
+                      </div>
+
+                      {/* Mini Timeline de Postulación */}
+                      <div style={{ padding: '8px 4px 0', borderTop: '1px solid var(--color-border-light)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', position: 'relative', fontSize: '0.72rem', fontWeight: 600 }}>
+                          {['Postulado', 'En Revisión', 'Preseleccionado', 'Vinculado'].map((step, sIdx) => {
+                            const currentIdx = 
+                              post.estado === 'FINALIZADO' ? 3 :
+                              post.estado === 'PRESELECCIONADO' ? 2 :
+                              post.estado === 'EN_REVISION' ? 1 : 0;
+                            const isDone = sIdx <= currentIdx;
+                            return (
+                              <div key={step} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', zIndex: 1 }}>
+                                <div
+                                  style={{
+                                    width: '18px',
+                                    height: '18px',
+                                    borderRadius: '50%',
+                                    background: isDone ? 'var(--color-primary)' : 'var(--color-border)',
+                                    color: '#FFFFFF',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontSize: '10px'
+                                  }}
+                                >
+                                  {isDone ? '✓' : ''}
+                                </div>
+                                <span style={{ color: isDone ? 'var(--color-navy)' : 'var(--color-text-muted)' }}>
+                                  {step}
+                                </span>
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
-                      <Badge variant={getBadgeForEstado(post.estado)}>
-                        {String(post.estado || '').replace('_', ' ')}
-                      </Badge>
                     </div>
                   </Card>
                 );
