@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -16,6 +16,7 @@ import {
 } from '../components/common/Icons';
 import Avatar from '../components/common/Avatar';
 import Badge from '../components/common/Badge';
+import NotificationDropdown from '../components/common/NotificationDropdown';
 import './DashboardLayout.css';
 
 export default function DashboardLayout({ children }) {
@@ -172,6 +173,7 @@ export default function DashboardLayout({ children }) {
           </div>
 
           <div className="header-right">
+            <NotificationDropdown />
             <Badge variant="primary" className="header-role-badge">
               {getRoleLabel()}
             </Badge>

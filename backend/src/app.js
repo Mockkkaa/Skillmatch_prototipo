@@ -1,4 +1,4 @@
-require('dotenv').config();
+﻿require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -17,6 +17,7 @@ const postulacionesRoutes = require('./routes/postulaciones');
 const empresasRoutes = require('./routes/empresas');
 const usersRoutes = require('./routes/users');
 const reportesRoutes = require('./routes/reportes');
+const notificacionesRoutes = require('./routes/notificaciones');
 
 const app = express();
 
@@ -52,6 +53,7 @@ app.use('/api/postulaciones', postulacionesRoutes);
 app.use('/api/empresas', empresasRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/reportes', reportesRoutes);
+app.use('/api/notificaciones', notificacionesRoutes);
 
 // 404 and global error handlers
 app.use(notFound);

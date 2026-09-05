@@ -1,4 +1,5 @@
-const pool = require('../config/database');
+﻿const pool = require('../config/database');
+const { createNotification } = require('./notificacionController');
 
 /** GET /api/postulaciones - Postulaciones del aprendiz autenticado */
 const getPostulaciones = async (req, res, next) => {
@@ -70,7 +71,13 @@ const createPostulacion = async (req, res, next) => {
     if (!ap.length) return res.status(403).json({ success: false, message: 'Solo los aprendices pueden postularse.' });
 
     // Check vacante exists and is published
-    const [vac] = await pool.query("SELECT id, estado FROM vacantes WHERE id = ? AND estado = 'PUBLICADA'", [vacante_id]);
+    const [vac] = await pool.query(
+      `SELECT v.id, v.cargo, v.estado, e.usuario_id as empresa_usuario_id, e.razon_social 
+       FROM vacantes v 
+       JOIN empresas e ON v.empresa_id = e.id 
+       WHERE v.id = ? AND v.estado = 'PUBLICADA'`,
+      [vacante_id]
+    );
     if (!vac.length) return res.status(404).json({ success: false, message: 'La vacante no está disponible.' });
 
     // Check duplicate application
@@ -84,6 +91,26 @@ const createPostulacion = async (req, res, next) => {
       'INSERT INTO postulaciones (aprendiz_id, vacante_id, carta_presentacion) VALUES (?, ?, ?)',
       [ap[0].id, vacante_id, carta_presentacion || null]
     );
+
+    // Notificar al Aprendiz que su postulación fue enviada con éxito
+    await createNotification({
+      usuario_id: req.user.id,
+      tipo: 'SUCCESS',
+      titulo: 'Postulación enviada',
+      mensaje: `Te has postulado con éxito a la vacante "${vac[0].cargo}" en ${vac[0].razon_social}.`,
+      enlace: '/postulaciones'
+    });
+
+    // Notificar a la Empresa que recibió una nueva postulación
+    if (vac[0].empresa_usuario_id) {
+      await createNotification({
+        usuario_id: vac[0].empresa_usuario_id,
+        tipo: 'INFO',
+        titulo: 'Nueva postulación recibida',
+        mensaje: `${req.user.nombre || 'Un aprendiz'} se ha postulado a tu vacante "${vac[0].cargo}".`,
+        enlace: '/empresa/postulaciones'
+      });
+    }
 
     res.status(201).json({ success: true, message: '¡Postulación enviada correctamente!', id: result.insertId });
   } catch (error) {
@@ -102,16 +129,49 @@ const updatePostulacion = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Estado no válido' });
     }
 
+    // Obtener detalles de la postulación para notificar al aprendiz
+    const [postData] = await pool.query(
+      `SELECT p.id, p.aprendiz_id, a.usuario_id as aprendiz_usuario_id, v.cargo, e.razon_social, e.usuario_id as empresa_usuario_id
+       FROM postulaciones p
+       JOIN vacantes v ON p.vacante_id = v.id
+       JOIN empresas e ON v.empresa_id = e.id
+       JOIN aprendices a ON p.aprendiz_id = a.id
+       WHERE p.id = ?`,
+      [id]
+    );
+
+    if (!postData.length) {
+      return res.status(404).json({ success: false, message: 'Postulación no encontrada' });
+    }
+
     if (req.user.rol === 'EMPRESA') {
-      const [post] = await pool.query(
-        'SELECT p.id FROM postulaciones p JOIN vacantes v ON p.vacante_id = v.id JOIN empresas e ON v.empresa_id = e.id WHERE p.id = ? AND e.usuario_id = ?',
-        [id, req.user.id]
-      );
-      if (!post.length) return res.status(403).json({ success: false, message: 'No tienes permiso para actualizar esta postulación' });
+      if (postData[0].empresa_usuario_id !== req.user.id) {
+        return res.status(403).json({ success: false, message: 'No tienes permiso para actualizar esta postulación' });
+      }
     }
 
     await pool.query('UPDATE postulaciones SET estado=?, nota_empresa=? WHERE id=?', [estado, nota_empresa || null, id]);
-    res.json({ success: true, message: 'Estado de postulación actualizado.' });
+
+    // Notificar al Aprendiz sobre el cambio de estado
+    const estadoLabels = {
+      'EN_REVISION': 'está en revisión',
+      'PRESELECCIONADO': '¡Has sido preseleccionado! 🎉',
+      'RECHAZADO': 'ha sido descartada en este proceso',
+      'FINALIZADO': 'ha finalizado el proceso de selección',
+      'ENVIADA': 'está enviada'
+    };
+
+    const notifTipo = estado === 'PRESELECCIONADO' ? 'SUCCESS' : (estado === 'RECHAZADO' ? 'WARNING' : 'INFO');
+
+    await createNotification({
+      usuario_id: postData[0].aprendiz_usuario_id,
+      tipo: notifTipo,
+      titulo: 'Actualización en tu postulación',
+      mensaje: `Tu postulación para "${postData[0].cargo}" en ${postData[0].razon_social} ${estadoLabels[estado] || estado}.${nota_empresa ? ' Nota: ' + nota_empresa : ''}`,
+      enlace: '/postulaciones'
+    });
+
+    res.json({ success: true, message: 'Estado de postulación actualizado y notificación enviada.' });
   } catch (error) {
     next(error);
   }
