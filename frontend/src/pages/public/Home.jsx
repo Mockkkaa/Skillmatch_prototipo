@@ -18,7 +18,7 @@ const PROGRAMAS_SENA = [
 // Preguntas frecuentes
 const FAQS = [
 
-  
+
   {
     pregunta: '¿Tiene algún costo registrarse o postularse en SKILLMATCH?',
     respuesta: 'No. SKILLMATCH es una plataforma oficial y completamente gratuita tanto para aprendices del SENA como para las empresas aliadas.'
