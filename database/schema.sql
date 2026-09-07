@@ -2,6 +2,17 @@
 -- SKILLMATCH - Base de datos
 -- Plataforma de gestión de empleo para aprendices del SENA
 -- ============================================================
+-- ENCODING: UTF-8 (guarda este archivo como UTF-8 en tu editor)
+-- Ejecutar en XAMPP: mysql -u root < schema.sql
+-- O desde phpMyAdmin: importar con charset UTF-8
+-- ============================================================
+
+-- Configuración de charset para soportar tildes, ñ y caracteres especiales
+SET NAMES utf8mb4;
+SET CHARACTER SET utf8mb4;
+SET character_set_connection = utf8mb4;
+SET character_set_results = utf8mb4;
+SET character_set_client = utf8mb4;
 
 DROP DATABASE IF EXISTS skillmatch;
 CREATE DATABASE skillmatch CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

@@ -2,7 +2,7 @@
 # SKILLMATCH - .gitignore
 # ============================================================
 
-# Dependencias (nunca subir al repo)
+# Dependencias (NUNCA subir al repo - muy pesadas y regenerables)
 node_modules/
 **/node_modules/
 
@@ -11,10 +11,16 @@ node_modules/
 **/.env
 !**/.env.example
 
+# Archivos de entorno específicos del backend
+backend/.env
+backend/.env.local
+backend/.env.production
+
 # Build / Distribución
 dist/
 dist-ssr/
 build/
+frontend/dist/
 
 # Logs
 logs/
@@ -43,3 +49,8 @@ backend/uploads/*
 # Cache
 .cache/
 *.local
+
+# Dumps de base de datos locales (nunca subir)
+database/*.dump
+database/*.bak
+*.sql.gz

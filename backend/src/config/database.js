@@ -11,6 +11,15 @@ const pool = mysql.createPool({
   connectionLimit: 10,
   queueLimit: 0,
   charset: 'utf8mb4',
+  collation: 'utf8mb4_unicode_ci',
+  timezone: 'local',
+  // Garantiza caracteres especiales (tildes, ñ, emojis) en cada conexión
+  initializationCommands: [
+    "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci",
+    "SET character_set_connection = utf8mb4",
+    "SET character_set_results = utf8mb4",
+    "SET character_set_client = utf8mb4"
+  ],
 });
 
 // Test connection on startup

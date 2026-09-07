@@ -1,0 +1,32 @@
+# ============================================================
+# SKILLMATCH BACKEND - .gitignore
+# ============================================================
+
+# Dependencias (nunca subir al repo)
+node_modules/
+
+# Variables de entorno (contienen contraseñas/secretos)
+.env
+
+# Archivos de subida de usuarios
+uploads/*
+!uploads/.gitkeep
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Cache y compilados
+.cache/
+dist/
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
