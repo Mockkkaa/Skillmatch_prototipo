@@ -1,0 +1,45 @@
+# ============================================================
+# SKILLMATCH - .gitignore
+# ============================================================
+
+# Dependencias (nunca subir al repo)
+node_modules/
+**/node_modules/
+
+# Variables de entorno (contienen contraseñas/secretos)
+.env
+**/.env
+!**/.env.example
+
+# Build / Distribución
+dist/
+dist-ssr/
+build/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Archivos locales del editor
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+Thumbs.db
+
+# Uploads locales (archivos subidos por usuarios)
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# Cache
+.cache/
+*.local
