@@ -13,24 +13,42 @@ const storage = multer.diskStorage({
     cb(null, photosDir);
   },
   filename: (req, file, cb) => {
-    const uniqueName = `user_${req.user.id}_${Date.now()}${path.extname(file.originalname)}`;
-    cb(null, uniqueName);
+    // Sanitize original filename: remove special chars/spaces/tildes
+    // to avoid OS and filesystem encoding issues with Spanish characters
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = `user_${req.user?.id || 'unknown'}_${Date.now()}${ext}`;
+    cb(null, safeName);
   },
 });
 
 const fileFilter = (req, file, cb) => {
   const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+
+  // Fix: multer 2.x encodes originalname in latin1 from some clients
+  // Decode the filename correctly to handle special characters
+  if (file.originalname) {
+    try {
+      file.originalname = Buffer.from(file.originalname, 'latin1').toString('utf8');
+    } catch (e) {
+      // keep original if decode fails
+    }
+  }
+
   if (allowedTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new Error('Tipo de archivo no permitido. Solo se aceptan imágenes JPG, PNG o WebP.'), false);
+    // multer 2.x: pass error as first arg to reject
+    cb(new multer.MulterError('LIMIT_UNEXPECTED_FILE', 'Solo se aceptan imágenes JPG, PNG o WebP.'));
   }
 };
 
 const upload = multer({
   storage,
   fileFilter,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB
+    files: 1,                   // solo 1 archivo a la vez
+  },
 });
 
 module.exports = upload;
